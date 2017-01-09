@@ -24,6 +24,7 @@ Module Module1
     Public Rand As New Random
     Sub Main()
         Console.Clear()
+        Console.Title = "CS:GO CFG Generator"
         Console.WriteLine("Welcome to the CFG generator.")
         Console.WriteLine("1. Crosshair")
         Console.WriteLine("2. Viewmodel")
