@@ -18,6 +18,9 @@ Module Module1
     Public Resolution As String
     Public CFGPath As String = "C:\Program Files (x86)\Steam\SteamApps\common\Counter-Strike Global Offensive\csgo\cfg"
     Public WriteCFG As Boolean = False
+    Public xHairCFG As String = "randomxhair"
+    Public ViewmodelCFG As String = "randomviewmodel"
+    Public AllinOneCFG As String = "randomallinone"
     Public Rand As New Random
     Sub Main()
         Console.Clear()
@@ -27,7 +30,8 @@ Module Module1
         Console.WriteLine("3. Resolution")
         Console.WriteLine("4. All in One")
         Console.WriteLine("5. Set CFG Path")
-        Console.WriteLine("6. Write to CFG's?: {0}", WriteCFG)
+        Console.WriteLine("6. Set file names")
+        Console.WriteLine("7. Write to CFG's?: {0}", WriteCFG)
         Dim UserInput As String = Console.ReadLine
         Select Case UserInput
             Case 1
@@ -41,6 +45,8 @@ Module Module1
             Case 5
                 SetCFGPath()
             Case 6
+                SetFileNames()
+            Case 7
                 If WriteCFG = False Then
                     WriteCFG = True
                     Main()
@@ -56,7 +62,7 @@ Module Module1
 
     Sub Crosshair()
         Console.Clear()
-        Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\randomxhair.cfg")
+        Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + xHairCFG + ".cfg")
         Dim DecimalRand1 As Integer = Rand.Next(1, 11)
         Dim DecimalRand2 As Integer = Rand.Next(1, 3)
 
@@ -165,7 +171,7 @@ Module Module1
 
     Sub Viewmodel()
         Console.Clear()
-        Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\randomviewmodel.cfg")
+        Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + ViewmodelCFG + ".cfg")
         Dim DecimalRand1 As Integer = Rand.Next(1, 11)
         Dim DecimalRand2 As Integer = Rand.Next(1, 4)
 
@@ -286,7 +292,7 @@ Module Module1
 
     Sub AllInOne()
         Console.Clear()
-        Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\randomallinone.cfg")
+        Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + AllinOneCFG + ".cfg")
         Dim DecimalRand1 As Integer = Rand.Next(1, 11)
         Dim DecimalRand2 As Integer = Rand.Next(1, 3)
 
@@ -511,5 +517,35 @@ Module Module1
         End If
 
         Main()
+    End Sub
+    Sub SetFileNames()
+        Console.Clear()
+        Console.WriteLine("Select the one you want to change:")
+        Console.WriteLine("1. Crosshair: {0}", xHairCFG)
+        Console.WriteLine("2. Viewmodel {0}", ViewmodelCFG)
+        Console.WriteLine("3. All in One: {0}", AllinOneCFG)
+        Console.WriteLine("4. Exit")
+        Dim UserInput As String = Console.ReadLine
+        Select Case UserInput
+            Case 1
+                Console.Clear()
+                Console.WriteLine("Enter your new file name now:")
+                xHairCFG = Console.ReadLine
+                SetFileNames()
+            Case 2
+                Console.Clear()
+                Console.WriteLine("Enter your new file name now:")
+                ViewmodelCFG = Console.ReadLine
+                SetFileNames()
+            Case 3
+                Console.Clear()
+                Console.WriteLine("Enter your new file name now:")
+                AllinOneCFG = Console.ReadLine
+                SetFileNames()
+            Case 4
+                Main()
+            Case Else
+                SetFileNames()
+        End Select
     End Sub
 End Module
