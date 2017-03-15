@@ -16,6 +16,8 @@ Module Module1
     Public ViewmodelZ As Double
     Public ViewmodelBob As Double
     Public Righthand As Double
+    Public BobLat As Double
+    Public BobVert As Double
     Public Resolution As String
     Public CFGPath As String = "C:\Program Files (x86)\Steam\SteamApps\common\Counter-Strike Global Offensive\csgo\cfg"
     Public WriteCFG As Boolean = False
@@ -298,12 +300,24 @@ Module Module1
         Else
             Righthand = Cvars(15)
         End If
+
+        DecimalRand2 = Rand.Next(0, 2)
+        If DecimalRand2 = 0 Then
+            BobLat = 0.4
+            BobVert = 0.25
+        Else
+            BobLat = 0
+            BobVert = 0
+        End If
+
         Console.WriteLine("FOV: {0}", ViewmodelFOV)
         Console.WriteLine("X Offset: {0}", ViewmodelX)
         Console.WriteLine("Y Offset: {0}", ViewmodelY)
         Console.WriteLine("Z Offset: {0}", ViewmodelZ)
         Console.WriteLine("Bob: {0}", ViewmodelBob)
         Console.WriteLine("Righthand: {0}", Righthand)
+        Console.WriteLine("Bob Lat: {0}", BobLat)
+        Console.WriteLine("Bob Vert: {0}", BobVert)
 
         If WriteCFG = True Then
             objStreamWriter.WriteLine("viewmodel_fov {0}", ViewmodelFOV)
@@ -312,6 +326,8 @@ Module Module1
             objStreamWriter.WriteLine("viewmodel_offset_z {0}", ViewmodelZ)
             objStreamWriter.WriteLine("cl_bob_lower_amt {0}", ViewmodelBob)
             objStreamWriter.WriteLine("cl_righthand {0}", Righthand)
+            objStreamWriter.WriteLine("cl_bobamt_lat {0}", BobLat)
+            objStreamWriter.WriteLine("cl_bobamt_vert {0}", BobVert)
             objStreamWriter.Close()
         End If
 
@@ -563,14 +579,24 @@ Module Module1
             Righthand = Cvars(15)
         End If
 
-        Console.WriteLine("Viewmodel:")
+        DecimalRand2 = Rand.Next(0, 2)
+        If DecimalRand2 = 0 Then
+            BobLat = 0.4
+            BobVert = 0.25
+        Else
+            BobLat = 0
+            BobVert = 0
+        End If
+
         Console.WriteLine("FOV: {0}", ViewmodelFOV)
         Console.WriteLine("X Offset: {0}", ViewmodelX)
         Console.WriteLine("Y Offset: {0}", ViewmodelY)
         Console.WriteLine("Z Offset: {0}", ViewmodelZ)
         Console.WriteLine("Bob: {0}", ViewmodelBob)
         Console.WriteLine("Righthand: {0}", Righthand)
-        Console.WriteLine("")
+        Console.WriteLine("Bob Lat: {0}", BobLat)
+        Console.WriteLine("Bob Vert: {0}", BobVert)
+        Console.WriteLine()
 
         'Resolution
         DecimalRand1 = Rand.Next(1, 11)
@@ -613,6 +639,8 @@ Module Module1
             objStreamWriter.WriteLine("viewmodel_offset_y {0}", ViewmodelY)
             objStreamWriter.WriteLine("viewmodel_offset_z {0}", ViewmodelZ)
             objStreamWriter.WriteLine("cl_bob_lower_amt {0}", ViewmodelBob)
+            objStreamWriter.WriteLine("cl_bobamt_lat {0}", BobLat)
+            objStreamWriter.WriteLine("cl_bobamt_vert {0}", BobVert)
             objStreamWriter.WriteLine("cl_righthand {0}", Righthand)
             objStreamWriter.WriteLine("mat_setvideomode " + Height + " " + Width + " 0")
             objStreamWriter.Close()
