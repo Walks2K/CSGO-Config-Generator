@@ -7,3 +7,13 @@ C:\Users\Neil\Documents\Visual Studio 2012\Projects\CSGO-Config-Generator\CSGO-C
 C:\Users\Neil\Documents\Visual Studio 2012\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
 C:\Users\Neil\Documents\Visual Studio 2012\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.xml
 C:\Users\Neil\Documents\Visual Studio 2012\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe.config
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.pdb
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.xml
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.vbprojResolveAssemblyReference.cache
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Resources.resources
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.vbproj.GenerateResource.Cache
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.xml
+C:\Users\Neil\Documents\Visual Studio 2017\Projects\CSGO-Config-Generator\CSGO-Config-Generator\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb

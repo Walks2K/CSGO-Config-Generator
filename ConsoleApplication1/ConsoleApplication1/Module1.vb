@@ -1,837 +1,494 @@
 ﻿Imports System.IO
 Module Module1
-    Public CrosshairSize As Double
-    Public CrosshairGap As Double
-    Public CrosshairStyle As Integer
-    Public CrosshairColor As Double
-    Public CrosshairColorR As Double
-    Public CrosshairColorG As Double
-    Public CrosshairColorB As Double
-    Public CrosshairThickness As Double
-    Public CrosshairOutline As Double
-    Public CrosshairOutlineThickness As Double
-    Public ViewmodelFOV As Double
-    Public ViewmodelX As Double
-    Public ViewmodelY As Double
-    Public ViewmodelZ As Double
-    Public ViewmodelBob As Double
-    Public Righthand As Double
-    Public BobLat As Double
-    Public BobVert As Double
-    Public Resolution As String
-    Public CFGPath As String = "C:\Program Files (x86)\Steam\SteamApps\common\Counter-Strike Global Offensive\csgo\cfg"
-    Public WriteCFG As Boolean = False
-    Public xHairCFG As String = "randomxhair"
-    Public ViewmodelCFG As String = "randomviewmodel"
-    Public AllinOneCFG As String = "randomallinone"
-    Public Rand As New Random
-    Public Cvars() As String = {"No", "No", "4", "No", "No", "No", "No", "No", "No", "No", "68", "2.5", "0", "-1.5", "No", "No", "No"}
-    Sub Main()
-        Console.Clear()
-        For i = 0 To 16
-            If i < 15 Then
-                If Not IsNumeric(Cvars(i)) Then
-                    Cvars(i) = "No"
-                End If
-            End If
-        Next
+	Public CrosshairSize As Double
+	Public CrosshairGap As Double
+	Public CrosshairStyle As Integer
+	Public CrosshairColor As Double
+	Public CrosshairThickness As Double
+	Public CrosshairOutline As Double
+	Public CrosshairOutlineThickness As Double
+	Public ViewmodelFOV As Double
+	Public ViewmodelX As Double
+	Public ViewmodelY As Double
+	Public ViewmodelZ As Double
+	Public ViewmodelBob As Double
+	Public BobLat As Double
+	Public BobVert As Double
+	Public Righthand As Double
+	Public Resolution As String
+	Public Sens As Double
+	Public CFGPath As String = My.Settings.SavedCFGPath
+	Public WriteCFG As Boolean = My.Settings.WriteCFG
+	Public CFGName As String = My.Settings.FileName
+	Public Rand As New Random
+	Public SupportedResolutions() As String = {"1920x1080", "1280x1024", "1280x960", "1024x768", "800x600", "1280x720", "1600x900", "1280x800", "1440x1080", "1152x864", "1440x900", "1680x1050"}
+	Public Settings() As String = {"Yes", "Yes", "No", "Yes", "Yes", "Yes", "Yes", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "No"}
+	Public CrosshairColorR As Double
+	Public CrosshairColorG As Double
+	Public CrosshairColorB As Double
+	Public CrosshairUse5 As Boolean
+	Public Height As String
+	Public Width As String
+	Public location As String = System.Environment.GetCommandLineArgs()(0)
+	Public appName As String = System.IO.Path.GetFileName(location)
+	Public DPI As Integer = My.Settings.DPI
 
-        Console.Title = "CS:GO CFG Generator"
-        Console.WriteLine("Welcome to the CFG generator.")
-        Console.WriteLine("1. Crosshair")
-        Console.WriteLine("2. Viewmodel")
-        Console.WriteLine("3. Resolution")
-        Console.WriteLine("4. All in One")
-        Console.WriteLine("5. Set CFG Path")
-        Console.WriteLine("6. Set file names")
-        Console.WriteLine("7. Write to CFG's?: {0}", WriteCFG)
-        Console.WriteLine("8. Preset Cvars")
-        Dim UserInput As String = Console.ReadLine
-        Select Case UserInput
-            Case 1
-                Crosshair()
-            Case 2
-                Viewmodel()
-            Case 3
-                ResolutionSub()
-            Case 4
-                AllInOne()
-            Case 5
-                SetCFGPath()
-            Case 6
-                SetFileNames()
-            Case 7
-                If WriteCFG = False Then
-                    WriteCFG = True
-                    Main()
-                Else
-                    WriteCFG = False
-                    Main()
-                End If
-            Case 8
-                PresetCvars()
-            Case Else
-                Main()
-        End Select
-        Console.ReadLine()
-    End Sub
+	Sub Main()
+		SaveSettings()
+		My.Settings.Save()
+		Dim FileName As String = System.AppDomain.CurrentDomain.BaseDirectory & "\" + appName + ".txt"
+		Settings = File.ReadAllLines(FileName)
+		Console.Clear()
+		Console.Title = "CS:GO CFG Generator"
+		Console.WriteLine("Welcome to the CFG generator.")
+		Console.WriteLine("1. Generate")
+		Console.WriteLine("2. Generate Options")
+		Console.WriteLine("3. Set CFG Path")
+		Console.WriteLine("4. Set file name")
+		Console.WriteLine("5. Write to CFG's?: {0}", WriteCFG)
+		Dim UserInput As String = Console.ReadLine
+		Select Case UserInput
+			Case 1
+				Generate()
+			Case 2
+				GenerateSetup()
+			Case 3
+				SetCFGPath()
+			Case 4
+				SetFileNames()
+			Case 5
+				If WriteCFG = False Then
+					WriteCFG = True
+					Main()
+				Else
+					WriteCFG = False
+					Main()
+				End If
+			Case Else
+				Main()
+		End Select
+		Console.ReadLine()
+	End Sub
 
-    Sub Crosshair()
-        Console.Clear()
-        Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + xHairCFG + ".cfg")
-        Dim DecimalRand1 As Integer = Rand.Next(1, 11)
-        Dim DecimalRand2 As Integer = Rand.Next(1, 3)
+	Sub GenerateSetup()
+		SaveSettings()
+		My.Settings.Save()
+		Console.Clear()
+		Console.WriteLine("Which values would you like to generate?")
+		Console.WriteLine("Crosshair Settings:")
+		Console.WriteLine("1. Size: {0}", Settings(0))
+		Console.WriteLine("2. Gap: {0}", Settings(1))
+		Console.WriteLine("3. Style: {0}", Settings(2))
+		Console.WriteLine("4. Color: {0}", Settings(3))
+		Console.WriteLine("5. Thickness: {0}", Settings(4))
+		Console.WriteLine("6. Outline: {0}", Settings(5))
+		Console.WriteLine("7. Outline Thickness: {0}", Settings(6))
+		Console.WriteLine(vbCrLf + "Viewmodel Settings")
+		Console.WriteLine("8. FOV: {0}", Settings(7))
+		Console.WriteLine("9. X Offset: {0}", Settings(8))
+		Console.WriteLine("10. Y Offset: {0}", Settings(9))
+		Console.WriteLine("11. Z Offset: {0}", Settings(10))
+		Console.WriteLine("12. Bob Amt: {0}", Settings(11))
+		Console.WriteLine("13. Bob Lat: {0}", Settings(12))
+		Console.WriteLine("14. Bob Vert: {0}", Settings(13))
+		Console.WriteLine("15. Righthand: {0}", Settings(14))
+		Console.WriteLine(vbCrLf + "Extra Options:")
+		Console.WriteLine("16. Resolution: {0}", Settings(15))
+		Console.WriteLine("17. Sensitivity: {0}", Settings(16))
+		Console.WriteLine("18. Use Crosshair Color 5?: {0}", Settings(17))
+		Console.WriteLine("19. DPI: {0}", DPI)
+		Console.WriteLine(vbCrLf + "Do not enter a value to continue.")
+		Dim UserInputValid As Boolean = False
+		Dim UserInput As String
 
-        If Not IsNumeric(Cvars(0)) Then
-            CrosshairSize = Rand.Next(1, 5)
-            If DecimalRand1 > 5 Then
-                If DecimalRand1 = 1 Then
-                    CrosshairSize = CrosshairSize - 0.5
-                Else
-                    CrosshairSize = CrosshairSize + 0.5
-                End If
-            End If
-        Else
-            CrosshairSize = Cvars(0)
-        End If
-        If Not IsNumeric(Cvars(1)) Then
-            CrosshairGap = Rand.Next(-2, 3)
-            DecimalRand1 = Rand.Next(1, 11)
-            DecimalRand2 = Rand.Next(1, 3)
-            If DecimalRand1 > 5 Then
-                If DecimalRand1 = 1 Then
-                    CrosshairGap = CrosshairGap - 0.5
-                Else
-                    CrosshairGap = CrosshairGap + 0.5
-                End If
-            End If
-        Else
-            CrosshairGap = Cvars(1)
-        End If
+		While UserInputValid = False
+			Try
+				UserInput = Console.ReadLine()
+				If UserInput = "" Then
+					UserInputValid = True
+					Generate()
+				End If
+				Convert.ToInt32(UserInput)
+				UserInputValid = True
+			Catch ex As Exception
+				Console.WriteLine("That is not a valid input, try again.")
+			End Try
+		End While
 
-        If Not IsNumeric(Cvars(2)) Then
-            CrosshairStyle = Rand.Next(0, 7)
-        Else
-            CrosshairStyle = Cvars(2)
-        End If
+		While UserInput < 1 Or UserInput > 20
+			Console.WriteLine("That is not a valid input, try again.")
+			UserInput = Console.ReadLine
+		End While
 
-        If Not IsNumeric(Cvars(3)) Then
-            CrosshairColor = Rand.Next(1, 6)
-            If CrosshairColor = 5 Then
-                If Not IsNumeric(Cvars(4)) Then
-                    CrosshairColorR = Rand.Next(0, 256)
-                End If
-                If Not IsNumeric(Cvars(5)) Then
-                    CrosshairColorG = Rand.Next(0, 256)
-                End If
-                If Not IsNumeric(Cvars(6)) Then
-                    CrosshairColorB = Rand.Next(0, 256)
-                End If
-            End If
-        Else
-            CrosshairColor = Cvars(3)
-            If CrosshairColor = 5 Then
-                CrosshairColorR = Cvars(4)
-                CrosshairColorG = Cvars(5)
-                CrosshairColorB = Cvars(6)
-            End If
-        End If
-        DecimalRand1 = Rand.Next(1, 11)
-        DecimalRand2 = Rand.Next(1, 3)
-        If Not IsNumeric(Cvars(7)) Then
-            CrosshairThickness = Rand.Next(0, 2)
-            If DecimalRand1 > 5 Then
-                If DecimalRand1 = 1 Then
-                    CrosshairThickness = CrosshairThickness - 0.5
-                Else
-                    CrosshairThickness = CrosshairThickness + 0.5
-                End If
-            End If
-        Else
-            CrosshairThickness = Cvars(7)
-        End If
+		If UserInput = "19" Then
+			Console.Clear()
+			Console.WriteLine("Set your new DPI now.")
+			DPI = Console.ReadLine
+			My.Settings.DPI = DPI
+			GenerateSetup()
+		Else
+			For i = Convert.ToInt32(UserInput) To Convert.ToInt32(UserInput)
+				If Settings(i - 1) = "Yes" Then
+					Settings(i - 1) = "No"
+				Else
+					Settings(i - 1) = "Yes"
+				End If
+				Console.Clear()
+				GenerateSetup()
+			Next
+		End If
 
-        If Not IsNumeric(Cvars(8)) Then
-            CrosshairOutline = Rand.Next(0, 2)
-        Else
-            CrosshairOutline = Cvars(8)
-        End If
+		SaveSettings()
+		Generate()
 
-        DecimalRand2 = Rand.Next(1, 3)
-        If Not IsNumeric(Cvars(9)) Then
-            If DecimalRand2 = 1 Then
-                CrosshairOutlineThickness = 0.5
-            Else
-                CrosshairOutlineThickness = 1
-            End If
-        Else
-            CrosshairOutlineThickness = Cvars(9)
-        End If
+	End Sub
 
-        Console.WriteLine("Size: {0}", CrosshairSize)
-        Console.WriteLine("Gap: {0}", CrosshairGap)
-        Console.WriteLine("Style: {0}", CrosshairStyle)
-        Console.WriteLine("Color: {0}", CrosshairColor)
-        If CrosshairColor = 5 Then
-            Console.WriteLine("Color R: {0}", CrosshairColorR)
-            Console.WriteLine("Color G: {0}", CrosshairColorG)
-            Console.WriteLine("Color B: {0}", CrosshairColorB)
-        End If
-        Console.WriteLine("Thickness: {0}", CrosshairThickness)
-        Console.WriteLine("Outline: {0}", CrosshairOutline)
-        Console.WriteLine("Outline Thickness: {0}", CrosshairOutlineThickness)
+	Sub Generate()
+		Console.Clear()
+		Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + CFGName + ".cfg")
+		Dim RandomValue1 As Integer
+		Dim RandomValue2 As Integer
+		Dim WriteCrosshair As Boolean = False
+		Dim WriteCrosshairDone As Boolean = False
+		Dim WriteViewmodel As Boolean = False
+		Dim WriteViewmodelDone As Boolean = False
 
+		For i = 0 To 16
+			For j = 0 To 6
+				If Settings(j) = "Yes" Then
+					WriteCrosshair = True
+				End If
+			Next
+			If WriteCrosshair = True And WriteCrosshairDone = False Then
+				Console.WriteLine("Crosshair Settings:")
+				WriteCrosshairDone = True
+			End If
+			If Settings(i) = "Yes" Then
 
-        If WriteCFG = True Then
-            objStreamWriter.WriteLine("cl_crosshairsize {0}", CrosshairSize)
-            objStreamWriter.WriteLine("cl_crosshairgap {0}", CrosshairGap)
-            objStreamWriter.WriteLine("cl_crosshairstyle {0}", CrosshairStyle)
-            objStreamWriter.WriteLine("cl_crosshaircolor {0}", CrosshairColor)
-            If CrosshairColor = 5 Then
-                objStreamWriter.WriteLine("cl_crosshaircolor_r {0}", CrosshairColorR)
-                objStreamWriter.WriteLine("cl_crosshaircolor_g {0}", CrosshairColorG)
-                objStreamWriter.WriteLine("cl_crosshaircolor_b {0}", CrosshairColorB)
-            End If
-            objStreamWriter.WriteLine("cl_crosshairthickness {0}", CrosshairThickness)
-            objStreamWriter.WriteLine("cl_crosshair_drawoutline {0}", CrosshairOutline)
-            objStreamWriter.WriteLine("cl_crosshair_outlinethickness {0}", CrosshairOutlineThickness)
-            objStreamWriter.Close()
-        End If
+				'Size
+				If i = 0 Then
+					CrosshairSize = Rand.Next(0, 5)
+					Random5050(RandomValue1, RandomValue2, CrosshairSize)
+					If CrosshairSize < 0.5 Then
+						CrosshairSize = 0.5
+					End If
+					Console.WriteLine("Size: {0}", CrosshairSize)
+				End If
 
-        objStreamWriter.Close()
-        Console.WriteLine("Do you want to reroll? Y/N")
-        Dim UserInput As String = Console.ReadLine
-        While UserInput <> "Y" And UserInput <> "N"
-            Console.WriteLine("That is not valid, try again.")
-            UserInput = Console.ReadLine
-        End While
-        If UserInput = "Y" Then
-            Crosshair()
-        Else
-            Main()
-        End If
-    End Sub
+				'Gap
+				If i = 1 Then
+					CrosshairGap = Rand.Next(-3, 1)
+					Random5050(RandomValue1, RandomValue2, CrosshairGap)
+					Console.WriteLine("Gap: {0}", CrosshairGap)
+				End If
 
-    Sub Viewmodel()
-        Console.Clear()
-        Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + ViewmodelCFG + ".cfg")
-        Dim DecimalRand1 As Integer = Rand.Next(1, 11)
-        Dim DecimalRand2 As Integer = Rand.Next(1, 4)
+				'Style
+				If i = 2 Then
+					CrosshairStyle = Rand.Next(0, 7)
+					Console.WriteLine("Style: {0}", CrosshairStyle)
+				End If
 
-        If Not IsNumeric(Cvars(10)) Then
-            If DecimalRand2 = 1 Then
-                ViewmodelFOV = 60
-            End If
-            If DecimalRand2 = 2 Then
-                ViewmodelFOV = 65
-            End If
-            If DecimalRand2 = 3 Then
-                ViewmodelFOV = 68
-            End If
-        Else
-            ViewmodelFOV = Cvars(10)
-        End If
+				'Color
+				If i = 3 Then
+					If Settings(17) = "Yes" Then
+						CrosshairColor = Rand.Next(0, 6)
+					Else
+						CrosshairColor = Rand.Next(0, 5)
+					End If
+					If CrosshairColor = 5 Then
+						CrosshairColorR = Rand.Next(0, 256)
+						CrosshairColorG = Rand.Next(0, 256)
+						CrosshairColorB = Rand.Next(0, 256)
+					End If
+					Console.WriteLine("Color: {0}", CrosshairColor)
+					If CrosshairColor = 5 Then
+						Console.WriteLine("Color R: {0}", CrosshairColorR)
+						Console.WriteLine("Color G: {0}", CrosshairColorG)
+						Console.WriteLine("Color B: {0}", CrosshairColorB)
+					End If
+				End If
 
-        If Not IsNumeric(Cvars(11)) Then
-            DecimalRand1 = Rand.Next(1, 3)
-            ViewmodelX = Rand.Next(0, 3)
-            If DecimalRand1 > 5 Then
-                If DecimalRand1 = 1 Then
-                    ViewmodelX = ViewmodelX - 0.5
-                Else
-                    ViewmodelX = ViewmodelX + 0.5
-                End If
-            End If
-        Else
-            ViewmodelX = Cvars(11)
-        End If
+				'Thickness
+				If i = 4 Then
+					CrosshairThickness = Rand.Next(0, 3)
+					Random5050(RandomValue1, RandomValue2, CrosshairThickness)
+					Console.WriteLine("Thickness: {0}", CrosshairThickness)
+				End If
 
-        If Not IsNumeric(Cvars(12)) Then
-            DecimalRand1 = Rand.Next(1, 11)
-            DecimalRand2 = Rand.Next(1, 3)
-            ViewmodelY = Rand.Next(-2, 3)
-            If DecimalRand1 > 5 Then
-                If DecimalRand1 = 1 Then
-                    ViewmodelY = ViewmodelY - 0.5
-                Else
-                    ViewmodelY = ViewmodelY + 0.5
-                End If
-            End If
-            If ViewmodelY = 2.5 Then
-                ViewmodelY = 2
-            End If
-        Else
-            ViewmodelY = Cvars(12)
-        End If
+				'Outline
+				If i = 5 Then
+					CrosshairOutline = Rand.Next(0, 2)
+					Console.WriteLine("Outline: {0}", CrosshairOutline)
+				End If
 
-        If Not IsNumeric(Cvars(13)) Then
-            DecimalRand1 = Rand.Next(1, 11)
-            DecimalRand2 = Rand.Next(1, 3)
-            ViewmodelZ = Rand.Next(-2, 0)
-            If DecimalRand1 > 5 Then
-                If DecimalRand1 = 1 Then
-                    ViewmodelZ = ViewmodelZ - 0.5
-                Else
-                    ViewmodelZ = ViewmodelZ + 0.5
-                End If
-            End If
-        Else
-            ViewmodelZ = Cvars(13)
-        End If
+				'Outline Thickness
+				If i = 6 Then
+					CrosshairOutlineThickness = Rand.Next(0, 2)
+					Random5050(RandomValue1, RandomValue2, CrosshairOutlineThickness)
 
-        If Not IsNumeric(Cvars(14)) Then
-            DecimalRand2 = Rand.Next(1, 3)
-            If DecimalRand2 = 1 Then
-                ViewmodelBob = 5
-            Else
-                ViewmodelBob = 21
-            End If
-        Else
-            ViewmodelBob = Cvars(14)
-        End If
+					Console.WriteLine("Outline Thickness: {0}", CrosshairOutlineThickness)
+				End If
 
-        If Not IsNumeric(Cvars(15)) Then
-            DecimalRand2 = Rand.Next(0, 2)
-            If DecimalRand2 = 0 Then
-                Righthand = 0
-            Else
-                Righthand = 1
-            End If
-        Else
-            Righthand = Cvars(15)
-        End If
+				If i > 6 Then
+					For j = 7 To 13
+						If Settings(j) = "Yes" Then
+							WriteViewmodel = True
+						End If
+					Next
+					If WriteViewmodel = True And WriteViewmodelDone = False Then
+						Console.WriteLine(vbCrLf + "Viewmodel Settings:")
+						WriteViewmodelDone = True
+					End If
+				End If
 
-        DecimalRand2 = Rand.Next(0, 2)
-        If DecimalRand2 = 0 Then
-            BobLat = 0.4
-            BobVert = 0.25
-        Else
-            BobLat = 0
-            BobVert = 0
-        End If
+				If i = 7 Then
+					ViewmodelFOV = Rand.Next(54, 69)
+					Console.WriteLine("FOV: {0}", ViewmodelFOV)
+				End If
 
-        Console.WriteLine("FOV: {0}", ViewmodelFOV)
-        Console.WriteLine("X Offset: {0}", ViewmodelX)
-        Console.WriteLine("Y Offset: {0}", ViewmodelY)
-        Console.WriteLine("Z Offset: {0}", ViewmodelZ)
-        Console.WriteLine("Bob: {0}", ViewmodelBob)
-        Console.WriteLine("Righthand: {0}", Righthand)
-        Console.WriteLine("Bob Lat: {0}", BobLat)
-        Console.WriteLine("Bob Vert: {0}", BobVert)
+				If i = 8 Then
+					ViewmodelX = Rand.Next(-2, 3)
+					Random5050(RandomValue1, RandomValue2, ViewmodelX)
+					Console.WriteLine("X Offset: {0}", ViewmodelX)
+				End If
 
-        If WriteCFG = True Then
-            objStreamWriter.WriteLine("viewmodel_fov {0}", ViewmodelFOV)
-            objStreamWriter.WriteLine("viewmodel_offset_x {0}", ViewmodelX)
-            objStreamWriter.WriteLine("viewmodel_offset_y {0}", ViewmodelY)
-            objStreamWriter.WriteLine("viewmodel_offset_z {0}", ViewmodelZ)
-            objStreamWriter.WriteLine("cl_bob_lower_amt {0}", ViewmodelBob)
-            objStreamWriter.WriteLine("cl_righthand {0}", Righthand)
-            objStreamWriter.WriteLine("cl_bobamt_lat {0}", BobLat)
-            objStreamWriter.WriteLine("cl_bobamt_vert {0}", BobVert)
-            objStreamWriter.Close()
-        End If
+				If i = 9 Then
+					ViewmodelY = Rand.Next(-2, 3)
+					Random5050(RandomValue1, RandomValue2, ViewmodelY)
+					Console.WriteLine("Y Offset: {0}", ViewmodelY)
+				End If
 
-        objStreamWriter.Close()
-        Console.WriteLine("Do you want to reroll? Y/N")
-        Dim UserInput As String = Console.ReadLine
-        While UserInput <> "Y" And UserInput <> "N"
-            Console.WriteLine("That is not valid, try again.")
-            UserInput = Console.ReadLine
-        End While
-        If UserInput = "Y" Then
-            Viewmodel()
-        Else
-            Main()
-        End If
-    End Sub
+				If i = 10 Then
+					ViewmodelZ = Rand.Next(-2, 3)
+					Random5050(RandomValue1, RandomValue2, ViewmodelZ)
+					Console.WriteLine("Z Offset: {0}", ViewmodelZ)
+				End If
 
-    Sub ResolutionSub()
-        Console.Clear()
-        Dim DecimalRand1 As Integer = Rand.Next(1, 11)
-        Dim ResArray() As String = {"1920x1080", "1280x1024", "1280x960", "1024x768", "800x600", "1280x720", "1600x900"}
-        Dim ChosenRes(ResArray.Length) As String
-        If Cvars(15) = "No" Then
-            For i = 0 To ResArray.Length - 1
-                DecimalRand1 = Rand.Next(0, ResArray.Length)
-                While ChosenRes.Contains(ResArray(DecimalRand1))
-                    DecimalRand1 = Rand.Next(0, ResArray.Length)
-                End While
-                ChosenRes(i) = ResArray(DecimalRand1)
-            Next
-        Else
-            ChosenRes(0) = Cvars(15)
-        End If
+				If i = 11 Then
+					RandomValue1 = Rand.Next(0, 2)
+					If RandomValue1 = "0" Then
+						ViewmodelBob = 5
+					Else
+						ViewmodelBob = 21
+					End If
+					Console.WriteLine("Bob: {0}", ViewmodelBob)
+				End If
 
-        Console.WriteLine(ChosenRes(0))
+				If i = 12 Then
+					RandomValue1 = Rand.Next(0, 2)
+					If RandomValue1 = "0" Then
+						BobLat = 0.4
+					Else
+						BobLat = 0
 
-        Console.WriteLine("Do you want to reroll? Y/N")
-        Dim UserInput As String = Console.ReadLine
-        While UserInput <> "Y" And UserInput <> "N"
-            Console.WriteLine("That is not valid, try again.")
-            UserInput = Console.ReadLine
-        End While
-        If UserInput = "Y" Then
-            ResolutionSub()
-        Else
-            Main()
-        End If
-    End Sub
+					End If
+					Console.WriteLine("Bob Lat: {0}", BobLat)
+				End If
 
-    Sub AllInOne()
-        Console.Clear()
-        Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + AllinOneCFG + ".cfg")
-        Dim DecimalRand1 As Integer = Rand.Next(1, 11)
-        Dim DecimalRand2 As Integer = Rand.Next(1, 3)
+				If i = 13 Then
+					RandomValue1 = Rand.Next(0, 2)
+					If RandomValue1 = "0" Then
+						BobVert = 0.25
+					Else
+						BobVert = 0
+					End If
+					Console.WriteLine("Bob Vert: {0}", BobVert)
+				End If
 
-        'Size
-        If Not IsNumeric(Cvars(0)) Then
-            CrosshairSize = Rand.Next(1, 5)
-            If DecimalRand1 > 5 Then
-                If DecimalRand2 = 1 Then
-                    CrosshairSize = CrosshairSize - 0.5
-                End If
-                If DecimalRand2 = 2 Then
-                    CrosshairSize = CrosshairSize + 0.5
-                End If
-            End If
-        End If
+				If Settings(12) = "Yes" And Settings(13) = "Yes" Then
+					If BobLat = "0.4" Then
+						BobVert = 0.25
+					Else
+						BobVert = 0
+					End If
+				End If
 
-        'Gap
-        If Not IsNumeric(Cvars(1)) Then
-            CrosshairGap = Rand.Next(-4, 3)
-            DecimalRand1 = Rand.Next(1, 11)
-            DecimalRand2 = Rand.Next(1, 3)
-            If DecimalRand1 > 5 Then
-                If DecimalRand2 = 1 Then
-                    CrosshairGap = CrosshairGap - 0.5
-                End If
+				If i = 14 Then
+					RandomValue1 = Rand.Next(0, 2)
+					If RandomValue1 = "0" Then
+						Righthand = 0
+					Else
+						Righthand = 1
+					End If
+					Console.WriteLine("Righthand: {0}", Righthand)
+				End If
 
-                If DecimalRand2 = 2 Then
-                    CrosshairGap = CrosshairGap + 0.5
-                End If
-            End If
-        Else
-            CrosshairGap = Cvars(1)
-        End If
+				If i = 15 Then
+					RandomValue1 = Rand.Next(1, 11)
+					Dim ResArray() As String = SupportedResolutions
+					Dim ChosenRes(ResArray.Length) As String
+					RandomValue1 = Rand.Next(0, ResArray.Length)
+					For j = 0 To ResArray.Length - 1
+						While ChosenRes.Contains(ResArray(RandomValue1))
+							RandomValue1 = Rand.Next(0, ResArray.Length)
+						End While
+						ChosenRes(j) = ResArray(RandomValue1)
+					Next
 
-        'Style
-        If Not IsNumeric(Cvars(2)) Then
-            CrosshairStyle = Rand.Next(0, 7)
-        Else
-            CrosshairStyle = Cvars(2)
-        End If
+					Console.WriteLine(vbCrLf + "Resolution:")
+					Console.WriteLine(ChosenRes(0))
+					Console.WriteLine("")
 
-        'Colour
-        If Not IsNumeric(Cvars(3)) Then
-            CrosshairColor = Rand.Next(1, 6)
-            If CrosshairColor = 5 Then
-                If Not IsNumeric(Cvars(4)) Then
-                    CrosshairColorR = Rand.Next(0, 256)
-                End If
-                If Not IsNumeric(Cvars(5)) Then
-                    CrosshairColorG = Rand.Next(0, 256)
-                End If
-                If Not IsNumeric(Cvars(6)) Then
-                    CrosshairColorB = Rand.Next(0, 256)
-                End If
-            End If
-        Else
-            CrosshairColor = Cvars(3)
-            If CrosshairColor = 5 Then
-                CrosshairColorR = Cvars(4)
-                CrosshairColorG = Cvars(5)
-                CrosshairColorB = Cvars(6)
-            End If
-        End If
-        DecimalRand1 = Rand.Next(1, 11)
-        DecimalRand2 = Rand.Next(1, 3)
+					Height = ChosenRes(0).Split("x")(0)
+					Width = ChosenRes(0).Split("x")(1)
+				End If
 
-        'Thickness
-        If Not IsNumeric(Cvars(7)) Then
-            CrosshairThickness = Rand.Next(0, 3)
-            If DecimalRand1 > 5 Then
-                If DecimalRand2 = 1 Then
-                    CrosshairThickness = CrosshairThickness - 0.5
-                Else
-                    CrosshairThickness = CrosshairThickness + 0.5
-                End If
-            End If
-        Else
-            CrosshairThickness = Cvars(7)
-        End If
+				If i = 16 Then
+					Sens = Rand.Next(1, 4)
+					If Sens = 3 Then Sens = 2
+					RandomValue1 = Rand.Next(0, 2)
+					RandomValue2 = Rand.Next(0, 3)
+					Dim SensDecimal As Decimal = Rand.NextDouble
+					If RandomValue2 = "0" Then
+						SensDecimal = Decimal.Round(SensDecimal, 2)
+					Else
+						SensDecimal = Decimal.Round(SensDecimal, 1)
+					End If
+					If RandomValue1 = "0" Then
+						Sens = Sens - SensDecimal
+					Else
+						Sens = Sens + SensDecimal
+					End If
+					If Sens < 1 Then
+						Sens = 1 + SensDecimal
+					End If
+					Sens = Sens * (400 / DPI)
+					Console.WriteLine("Sens: {0}", Sens)
+				End If
+			End If
+		Next
 
-        'Outline
-        If Not IsNumeric(Cvars(8)) Then
-            CrosshairOutline = Rand.Next(0, 2)
-        Else
-            CrosshairOutline = Cvars(8)
-        End If
+		If WriteCFG = True Then
+			If Settings(0) = "Yes" Then
+				objStreamWriter.WriteLine("cl_crosshairsize {0}", CrosshairSize)
+			End If
+			If Settings(1) = "Yes" Then
+				objStreamWriter.WriteLine("cl_crosshairgap {0}", CrosshairGap)
+			End If
+			If Settings(2) = "Yes" Then
+				objStreamWriter.WriteLine("cl_crosshairstyle {0}", CrosshairStyle)
+			End If
+			If Settings(3) = "Yes" Then
+				objStreamWriter.WriteLine("cl_crosshaircolor {0}", CrosshairColor)
+				If CrosshairColor = 5 Then
+					objStreamWriter.WriteLine("cl_crosshaircolor_r {0}", CrosshairColorR)
+					objStreamWriter.WriteLine("cl_crosshaircolor_g {0}", CrosshairColorG)
+					objStreamWriter.WriteLine("cl_crosshaircolor_b {0}", CrosshairColorB)
+				End If
+			End If
+			If Settings(4) = "Yes" Then
+				objStreamWriter.WriteLine("cl_crosshairthickness {0}", CrosshairThickness)
+			End If
+			If Settings(5) = "Yes" Then
+				objStreamWriter.WriteLine("cl_crosshair_drawoutline {0}", CrosshairOutline)
+			End If
+			If Settings(6) = "Yes" Then
+				objStreamWriter.WriteLine("cl_crosshair_outlinethickness {0}", CrosshairOutlineThickness)
+			End If
+			If Settings(7) = "Yes" Then
+				objStreamWriter.WriteLine("viewmodel_fov {0}", ViewmodelFOV)
+			End If
+			If Settings(8) = "Yes" Then
+				objStreamWriter.WriteLine("viewmodel_offset_x {0}", ViewmodelX)
+			End If
+			If Settings(9) = "Yes" Then
+				objStreamWriter.WriteLine("viewmodel_offset_y {0}", ViewmodelY)
+			End If
+			If Settings(10) = "Yes" Then
+				objStreamWriter.WriteLine("viewmodel_offset_z {0}", ViewmodelZ)
+			End If
+			If Settings(11) = "Yes" Then
+				objStreamWriter.WriteLine("cl_bob_lower_amt {0}", ViewmodelBob)
+			End If
+			If Settings(12) = "Yes" Then
+				objStreamWriter.WriteLine("cl_bobamt_lat {0}", BobLat)
+			End If
+			If Settings(13) = "Yes" Then
+				objStreamWriter.WriteLine("cl_bobamt_vert {0}", BobVert)
+			End If
+			If Settings(14) = "Yes" Then
+				objStreamWriter.WriteLine("cl_righthand {0}", Righthand)
+			End If
+			If Settings(15) = "Yes" Then
+				objStreamWriter.WriteLine("mat_setvideomode " + Height + " " + Width + " 0")
+			End If
+			If Settings(16) = "Yes" Then
+				objStreamWriter.WriteLine("sensitivity {0}", Sens)
+			End If
+			objStreamWriter.Close()
+			End If
 
-        DecimalRand2 = Rand.Next(1, 3)
-        If Not IsNumeric(Cvars(9)) Then
-            If DecimalRand2 = 1 Then
-                CrosshairOutlineThickness = 0.5
-            Else
-                CrosshairOutlineThickness = 1
-            End If
-        Else
-            CrosshairOutlineThickness = Cvars(9)
-        End If
+			objStreamWriter.Close()
+		Console.WriteLine("Do you want to generate again? Y/N")
+		Dim UserInput As String = Console.ReadLine
+		While UserInput <> "Y" And UserInput <> "N"
+			Console.WriteLine("That is not valid, try again.")
+			UserInput = Console.ReadLine
+		End While
+		If UserInput = "Y" Then
+			Generate()
+		Else
+			Main()
+		End If
 
-        Console.WriteLine("Size: {0}", CrosshairSize)
-        Console.WriteLine("Gap: {0}", CrosshairGap)
-        Console.WriteLine("Style: {0}", CrosshairStyle)
-        Console.WriteLine("Color: {0}", CrosshairColor)
-        If CrosshairColor = 5 Then
-            Console.WriteLine("Color R: {0}", CrosshairColorR)
-            Console.WriteLine("Color G: {0}", CrosshairColorG)
-            Console.WriteLine("Color B: {0}", CrosshairColorB)
-        End If
-        Console.WriteLine("Thickness: {0}", CrosshairThickness)
-        Console.WriteLine("Outline: {0}", CrosshairOutline)
-        Console.WriteLine("Outline Thickness: {0}", CrosshairOutlineThickness)
-        Console.WriteLine("")
+	End Sub
 
-        DecimalRand1 = Rand.Next(1, 11)
-        DecimalRand2 = Rand.Next(1, 4)
+	Sub SetCFGPath()
+		Console.Clear()
+		Console.WriteLine("Current path: {0}", CFGPath)
+		Console.WriteLine("Do you want to change it? Y/N")
+		Threading.Thread.Sleep(250)
+		Dim UserInput As String = Console.ReadLine
+		While UserInput <> "Y" And UserInput <> "N"
+			Console.WriteLine("That is not valid, try again.")
+			UserInput = Console.ReadLine
+		End While
+		If UserInput = "Y" Then
+			Console.WriteLine("Enter your path now.")
+			CFGPath = Console.ReadLine
+		End If
 
-        'Viewmodel
-        If Not IsNumeric(Cvars(10)) Then
-            If DecimalRand2 = 1 Then
-                ViewmodelFOV = 60
-            End If
-            If DecimalRand2 = 2 Then
-                ViewmodelFOV = 65
-            End If
-            If DecimalRand2 = 3 Then
-                ViewmodelFOV = 68
-            End If
-        Else
-            ViewmodelFOV = Cvars(10)
-        End If
+		My.Settings.SavedCFGPath = CFGPath
+		My.Settings.Save()
+		Main()
+	End Sub
 
-        If Not IsNumeric(Cvars(11)) Then
-            DecimalRand1 = Rand.Next(1, 3)
-            ViewmodelX = Rand.Next(0, 3)
-            If DecimalRand1 > 5 Then
-                If DecimalRand1 = 1 Then
-                    ViewmodelX = ViewmodelX - 0.5
-                Else
-                    ViewmodelX = ViewmodelX + 0.5
-                End If
-            End If
-        Else
-            ViewmodelX = Cvars(11)
-        End If
+	Sub SetFileNames()
+		Console.Clear()
+		Console.WriteLine("Select the one you want to change:")
+		Console.WriteLine("1. Config Name: {0}", CFGName)
+		Console.WriteLine("2. Exit")
+		Dim UserInput As String = Console.ReadLine
+		Select Case UserInput
+			Case 1
+				Console.Clear()
+				Console.WriteLine("Enter your new file name now:")
+				CFGName = Console.ReadLine
+				My.Settings.FileName = CFGName
+				My.Settings.Save()
+				SetFileNames()
+			Case 2
+				Main()
+			Case Else
+				SetFileNames()
+		End Select
+	End Sub
+	Function Random5050(ByRef RandomValue1, ByRef RandomValue2, ByRef InputVar)
+		RandomValue1 = Rand.Next(0, 11)
+		RandomValue2 = Rand.Next(0, 2)
+		If RandomValue1 > 5 Then
+			If RandomValue2 = "0" Then
+				InputVar = InputVar - 0.5
+			Else
+				InputVar = InputVar + 0.5
+			End If
+		End If
 
-        If Not IsNumeric(Cvars(12)) Then
-            DecimalRand1 = Rand.Next(1, 11)
-            DecimalRand2 = Rand.Next(1, 3)
-            ViewmodelY = Rand.Next(-2, 3)
-            If DecimalRand1 > 5 Then
-                If DecimalRand1 = 1 Then
-                    ViewmodelY = ViewmodelY - 0.5
-                Else
-                    ViewmodelY = ViewmodelY + 0.5
-                End If
-            End If
-            If ViewmodelY = 2.5 Then
-                ViewmodelY = 2
-            End If
-        Else
-            ViewmodelY = Cvars(12)
-        End If
+		Return InputVar
+	End Function
 
-        If Not IsNumeric(Cvars(13)) Then
-            DecimalRand1 = Rand.Next(1, 11)
-            DecimalRand2 = Rand.Next(1, 3)
-            ViewmodelZ = Rand.Next(-2, 0)
-            If DecimalRand1 > 5 Then
-                If DecimalRand1 = 1 Then
-                    ViewmodelZ = ViewmodelZ - 0.5
-                Else
-                    ViewmodelZ = ViewmodelZ + 0.5
-                End If
-            End If
-        Else
-            ViewmodelZ = Cvars(13)
-        End If
-
-        If Not IsNumeric(Cvars(14)) Then
-            DecimalRand2 = Rand.Next(1, 3)
-            If DecimalRand2 = 1 Then
-                ViewmodelBob = 5
-            Else
-                ViewmodelBob = 21
-            End If
-        Else
-            ViewmodelBob = Cvars(14)
-        End If
-
-        If Not IsNumeric(Cvars(15)) Then
-            DecimalRand2 = Rand.Next(0, 2)
-            If DecimalRand2 = 0 Then
-                Righthand = 0
-            Else
-                Righthand = 1
-            End If
-        Else
-            Righthand = Cvars(15)
-        End If
-
-        DecimalRand2 = Rand.Next(0, 2)
-        If DecimalRand2 = 0 Then
-            BobLat = 0.4
-            BobVert = 0.25
-        Else
-            BobLat = 0
-            BobVert = 0
-        End If
-
-        Console.WriteLine("FOV: {0}", ViewmodelFOV)
-        Console.WriteLine("X Offset: {0}", ViewmodelX)
-        Console.WriteLine("Y Offset: {0}", ViewmodelY)
-        Console.WriteLine("Z Offset: {0}", ViewmodelZ)
-        Console.WriteLine("Bob: {0}", ViewmodelBob)
-        Console.WriteLine("Righthand: {0}", Righthand)
-        Console.WriteLine("Bob Lat: {0}", BobLat)
-        Console.WriteLine("Bob Vert: {0}", BobVert)
-        Console.WriteLine()
-
-        'Resolution
-        DecimalRand1 = Rand.Next(1, 11)
-        Dim ResArray() As String = {"1920x1080", "1280x1024", "1280x960", "1024x768", "800x600", "1280x720", "1600x900", "1920x720"}
-        Dim ChosenRes(ResArray.Length) As String
-        If Cvars(15) = "No" Then
-            For i = 0 To ResArray.Length - 1
-                DecimalRand1 = Rand.Next(0, ResArray.Length)
-                While ChosenRes.Contains(ResArray(DecimalRand1))
-                    DecimalRand1 = Rand.Next(0, ResArray.Length)
-                End While
-                ChosenRes(i) = ResArray(DecimalRand1)
-            Next
-        Else
-            ChosenRes(0) = Cvars(15)
-        End If
-
-        Console.WriteLine("Resolution:")
-        Console.WriteLine(ChosenRes(0))
-        Console.WriteLine("")
-
-        Dim Height As String = ChosenRes(0).Split("x")(0)
-        Dim Width As String = ChosenRes(0).Split("x")(1)
-
-        If WriteCFG = True Then
-            objStreamWriter.WriteLine("cl_crosshairsize {0}", CrosshairSize)
-            objStreamWriter.WriteLine("cl_crosshairgap {0}", CrosshairGap)
-            objStreamWriter.WriteLine("cl_crosshairstyle {0}", CrosshairStyle)
-            objStreamWriter.WriteLine("cl_crosshaircolor {0}", CrosshairColor)
-            If CrosshairColor = 5 Then
-                objStreamWriter.WriteLine("cl_crosshaircolor_r {0}", CrosshairColorR)
-                objStreamWriter.WriteLine("cl_crosshaircolor_g {0}", CrosshairColorG)
-                objStreamWriter.WriteLine("cl_crosshaircolor_b {0}", CrosshairColorB)
-            End If
-            objStreamWriter.WriteLine("cl_crosshairthickness {0}", CrosshairThickness)
-            objStreamWriter.WriteLine("cl_crosshair_drawoutline {0}", CrosshairOutline)
-            objStreamWriter.WriteLine("cl_crosshair_outlinethickness {0}", CrosshairOutlineThickness)
-            objStreamWriter.WriteLine("viewmodel_fov {0}", ViewmodelFOV)
-            objStreamWriter.WriteLine("viewmodel_offset_x {0}", ViewmodelX)
-            objStreamWriter.WriteLine("viewmodel_offset_y {0}", ViewmodelY)
-            objStreamWriter.WriteLine("viewmodel_offset_z {0}", ViewmodelZ)
-            objStreamWriter.WriteLine("cl_bob_lower_amt {0}", ViewmodelBob)
-            objStreamWriter.WriteLine("cl_bobamt_lat {0}", BobLat)
-            objStreamWriter.WriteLine("cl_bobamt_vert {0}", BobVert)
-            objStreamWriter.WriteLine("cl_righthand {0}", Righthand)
-            objStreamWriter.WriteLine("mat_setvideomode " + Height + " " + Width + " 0")
-            objStreamWriter.Close()
-        End If
-
-        objStreamWriter.Close()
-        Console.WriteLine("Do you want to reroll? Y/N")
-        Dim UserInput As String = Console.ReadLine
-        While UserInput <> "Y" And UserInput <> "N"
-            Console.WriteLine("That is not valid, try again.")
-            UserInput = Console.ReadLine
-        End While
-        If UserInput = "Y" Then
-            AllInOne()
-        Else
-            Main()
-        End If
-
-    End Sub
-
-    Sub SetCFGPath()
-        Console.Clear()
-        Console.WriteLine("Current path: {0}", CFGPath)
-        Console.WriteLine("Do you want to change it? Y/N")
-        Threading.Thread.Sleep(250)
-        Dim UserInput As String = Console.ReadLine
-        While UserInput <> "Y" And UserInput <> "N"
-            Console.WriteLine("That is not valid, try again.")
-            UserInput = Console.ReadLine
-        End While
-        If UserInput = "Y" Then
-            Console.WriteLine("Enter your path now.")
-            CFGPath = Console.ReadLine
-        End If
-
-        Main()
-    End Sub
-    Sub SetFileNames()
-        Console.Clear()
-        Console.WriteLine("Select the one you want to change:")
-        Console.WriteLine("1. Crosshair: {0}", xHairCFG)
-        Console.WriteLine("2. Viewmodel {0}", ViewmodelCFG)
-        Console.WriteLine("3. All in One: {0}", AllinOneCFG)
-        Console.WriteLine("4. Exit")
-        Dim UserInput As String = Console.ReadLine
-        Select Case UserInput
-            Case 1
-                Console.Clear()
-                Console.WriteLine("Enter your new file name now:")
-                xHairCFG = Console.ReadLine
-                SetFileNames()
-            Case 2
-                Console.Clear()
-                Console.WriteLine("Enter your new file name now:")
-                ViewmodelCFG = Console.ReadLine
-                SetFileNames()
-            Case 3
-                Console.Clear()
-                Console.WriteLine("Enter your new file name now:")
-                AllinOneCFG = Console.ReadLine
-                SetFileNames()
-            Case 4
-                Main()
-            Case Else
-                SetFileNames()
-        End Select
-    End Sub
-
-    Sub PresetCvars()
-        Console.Clear()
-        Console.WriteLine("Which one would you like to change?")
-        Console.WriteLine("Setting it to a non numeric value will void it.")
-        Console.WriteLine("The only exception is Resolution, which using No will void it.")
-        Console.WriteLine("")
-        Console.WriteLine("1. Size: {0}", Cvars(0))
-        Console.WriteLine("2. Gap: {0}", Cvars(1))
-        Console.WriteLine("3. Style: {0}", Cvars(2))
-        Console.WriteLine("4. Color: {0}", Cvars(3))
-        Console.WriteLine("5. Color R: {0}", Cvars(4))
-        Console.WriteLine("6. Color G: {0}", Cvars(5))
-        Console.WriteLine("7. Color B: {0}", Cvars(6))
-        Console.WriteLine("8. Thickness: {0}", Cvars(7))
-        Console.WriteLine("9. Outline: {0}", Cvars(8))
-        Console.WriteLine("10. Outline Thickness: {0}", Cvars(9))
-        Console.WriteLine("11. FOV: {0}", Cvars(10))
-        Console.WriteLine("12. X Offset: {0}", Cvars(11))
-        Console.WriteLine("13. Y Offset: {0}", Cvars(12))
-        Console.WriteLine("14. Z Offset: {0}", Cvars(13))
-        Console.WriteLine("15. Bob: {0}", Cvars(14))
-        Console.WriteLine("16. Righthand: {0}", Cvars(15))
-        Console.WriteLine("17. Resolution: {0}", Cvars(15))
-        Console.WriteLine("18. Exit")
-        Dim UserInput As String = Console.ReadLine
-        Console.Clear()
-        Select Case UserInput
-            Case 1
-                Console.WriteLine("1. Size: {0}", Cvars(0))
-                Cvars(0) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(0))
-                PresetCvars()
-            Case 2
-                Console.WriteLine("2. Gap: {0}", Cvars(1))
-                Cvars(1) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(1))
-                PresetCvars()
-            Case 3
-                Console.WriteLine("3. Style: {0}", Cvars(2))
-                Cvars(2) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(2))
-                PresetCvars()
-            Case 4
-                Console.WriteLine("4. Color: {0}", Cvars(3))
-                Cvars(3) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(3))
-                PresetCvars()
-            Case 5
-                Console.WriteLine("5. Color R: {0}", Cvars(4))
-                Cvars(4) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(4))
-                PresetCvars()
-            Case 6
-                Console.WriteLine("6. Color G: {0}", Cvars(5))
-                Cvars(5) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(5))
-                PresetCvars()
-            Case 7
-                Console.WriteLine("7. Color B: {0}", Cvars(6))
-                Cvars(6) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(6))
-                PresetCvars()
-            Case 8
-                Console.WriteLine("8. Thickness: {0}", Cvars(7))
-                Cvars(7) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(7))
-                PresetCvars()
-            Case 9
-                Console.WriteLine("9. Outline: {0}", Cvars(8))
-                Cvars(8) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(8))
-                PresetCvars()
-            Case 10
-                Console.WriteLine("10. Outline Thickness: {0}", Cvars(9))
-                Cvars(9) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(9))
-                PresetCvars()
-            Case 11
-                Console.WriteLine("11. FOV: {0}", Cvars(10))
-                Cvars(10) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(10))
-                PresetCvars()
-            Case 12
-                Console.WriteLine("12. X Offset: {0}", Cvars(11))
-                Cvars(11) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(11))
-                PresetCvars()
-            Case 13
-                Console.WriteLine("13. Y Offset: {0}", Cvars(12))
-                Cvars(12) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(12))
-                PresetCvars()
-            Case 14
-                Console.WriteLine("14. Z Offset: {0}", Cvars(13))
-                Cvars(13) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(13))
-                PresetCvars()
-            Case 15
-                Console.WriteLine("15. Bob: {0}", Cvars(14))
-                Cvars(14) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(14))
-                PresetCvars()
-            Case 16
-                Console.WriteLine("16. Righthand: {0}", Cvars(15))
-                Cvars(15) = Console.ReadLine
-                If Not Cvars(15) = 1 And Not Cvars(15) = 0 Then
-                    Console.WriteLine("That is not a valid input.")
-                Else
-                    Console.WriteLine("The new preset value is {0}", Cvars(15))
-                End If
-                Console.ReadLine()
-                PresetCvars()
-            Case 17
-                Console.WriteLine("For resolutions, please enter them in this format.")
-                Console.WriteLine("{Height}x{Width} e.g. 1024x768")
-                Console.WriteLine("16. Resolution: {0}", Cvars(16))
-                Cvars(15) = Console.ReadLine
-                Console.WriteLine("The new preset value is {0}", Cvars(16))
-                PresetCvars()
-            Case 18
-                Main()
-            Case Else
-                PresetCvars()
-        End Select
-    End Sub
+	Sub SaveSettings()
+		Dim FileName As String = System.AppDomain.CurrentDomain.BaseDirectory & "\" + appName + ".txt"
+		IO.File.WriteAllLines(FileName, Settings)
+	End Sub
 End Module
