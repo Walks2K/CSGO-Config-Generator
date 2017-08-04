@@ -63,6 +63,7 @@ Module Module1
 	Public BobEnabledIndex As Integer = My.Settings.BobEnabledIndex
 	Public HandToUse() As String = My.Settings.HandToUse.Cast(Of String)().ToArray()
 	Public HandToUseIndex As Integer = My.Settings.HandToUseIndex
+	Public FirstTimeRun As Boolean = My.Settings.FirstTimeRun
 
 	Sub Main()
 		'Setup
@@ -99,9 +100,14 @@ Module Module1
 		Console.WriteLine("5. Set file name")
 		Console.WriteLine("6. Write To CFG's?: {0}", WriteCFG)
 		StyleConsole()
-		Console.ForegroundColor = ConsoleColor.Green
-		Console.Write(vbCrLf + "This is a complete overhaul that gives you complete control over all sides of the generation. I decided it would be better if you could blacklist/whitelist things such as color of the crosshair since yellow really doesn't work for me ever since I tend to lose it a lot and keep crosshair generating to standards that people might actually use. Obviously you can now change it all for yourself so if you wanted a 100 size crosshair to be generated you could. This will be confusing at first to use and things such as disabling a certain aspect ratio disables all the resolutions and you must re-enable them etc but I will look into ways around that. Hope you enjoy this new version! :)" + vbCrLf + vbCrLf + "BiZR" + vbCrLf + vbCrLf)
-		Console.ResetColor()
+		If FirstTimeRun = True Then
+			Console.ForegroundColor = ConsoleColor.Green
+			Console.Write(vbCrLf + "This is a complete overhaul that gives you complete control over all sides of the generation. I decided it would be better if you could blacklist/whitelist things such as color of the crosshair since yellow really doesn't work for me ever since I tend to lose it a lot and keep crosshair generating to standards that people might actually use. Obviously you can now change it all for yourself so if you wanted a 100 size crosshair to be generated you could. This will be confusing at first to use and things such as disabling a certain aspect ratio disables all the resolutions and you must re-enable them etc but I will look into ways around that. Hope you enjoy this new version! :)" + vbCrLf + vbCrLf + "BiZR" + vbCrLf + vbCrLf)
+			Console.ResetColor()
+			FirstTimeRun = False
+			SaveSettings()
+			Threading.Thread.Sleep(1000)
+		End If
 		Dim UserInput As String = Console.ReadLine
 		Select Case UserInput
 			Case 1
@@ -652,6 +658,7 @@ Module Module1
 		My.Settings.HandToUse.Clear()
 		My.Settings.HandToUse.AddRange(HandToUse)
 		My.Settings.HandToUseIndex = HandToUseIndex
+		My.Settings.FirstTimeRun = FirstTimeRun
 		My.Settings.Save()
 	End Sub
 
