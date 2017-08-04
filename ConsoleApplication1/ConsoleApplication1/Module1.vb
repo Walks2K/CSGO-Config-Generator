@@ -282,25 +282,33 @@ Module Module1
 						BobLat = 0
 
 					End If
-					Console.WriteLine("Bob Lat: {0}", BobLat)
+
+					If Not Settings(12) = "Yes" And Settings(13) = "Yes" Then
+						Console.WriteLine("Bob Lat: {0}", BobLat)
+					End If
 				End If
 
-				If i = 13 Then
+					If i = 13 Then
 					RandomValue1 = Rand.Next(0, 2)
 					If RandomValue1 = "0" Then
 						BobVert = 0.25
 					Else
 						BobVert = 0
 					End If
-					Console.WriteLine("Bob Vert: {0}", BobVert)
+
+					If Not Settings(12) = "Yes" And Settings(13) = "Yes" Then
+						Console.WriteLine("Bob Vert: {0}", BobVert)
+					End If
 				End If
 
-				If Settings(12) = "Yes" And Settings(13) = "Yes" Then
+				If Settings(12) = "Yes" And Settings(13) = "Yes" And i = 14 Then
 					If BobLat = "0.4" Then
 						BobVert = 0.25
 					Else
 						BobVert = 0
 					End If
+					Console.WriteLine("Bob Lat: {0}", BobLat)
+					Console.WriteLine("Bob Vert: {0}", BobVert)
 				End If
 
 				If i = 14 Then
