@@ -1,4 +1,8 @@
 ﻿Imports System.IO
+Imports Microsoft.SqlServer
+Imports System.Net
+Imports System.Text.RegularExpressions
+
 Module Module1
 	Public CrosshairSize As Double
 	Public CrosshairGap As Double
@@ -26,7 +30,7 @@ Module Module1
 	Public ResolutionAspectRatios() As String = {"4:3", "16:9", "16:10"}
 	Public ResolutionAspectRatiosUsed() As String = My.Settings.ResolutionAspectRatiosUsedList.Cast(Of String)().ToArray()
 	Public Settings() As String = {"Yes", "Yes", "No", "Yes", "Yes", "Yes", "Yes", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"}
-	Public Version As String = "3.0"
+	Public Version As String = "4.0"
 	Public WipeOptions As Boolean = False
 	Public CrosshairColorR As Double
 	Public CrosshairColorG As Double
@@ -64,18 +68,22 @@ Module Module1
 	Public HandToUse() As String = My.Settings.HandToUse.Cast(Of String)().ToArray()
 	Public HandToUseIndex As Integer = My.Settings.HandToUseIndex
 	Public FirstTimeRun As Boolean = My.Settings.FirstTimeRun
+	Public WriteCFGOnline As Boolean = My.Settings.WriteCFGOnline
+	Public Name As String = My.Settings.Name
 
 	Sub Main()
 		'Setup
 		If File.Exists(VersionFile) Then
 			Dim CurrentVersion As String = File.ReadAllText(VersionFile)
 			If CurrentVersion <> Version Then
+				FirstTimeRun = True
 				If WipeOptions = True Then
 					File.Delete(SettingsFile)
 					IO.File.WriteAllText(VersionFile, Version)
 				End If
 			End If
 		Else
+			FirstTimeRun = True
 			IO.File.WriteAllText(VersionFile, Version)
 		End If
 
@@ -99,14 +107,17 @@ Module Module1
 		Console.WriteLine("4. Set CFG Path")
 		Console.WriteLine("5. Set file name")
 		Console.WriteLine("6. Write To CFG's?: {0}", WriteCFG)
+		Console.WriteLine("7. Update online CFG? (Uses existing one in CFG Path): {0}", WriteCFGOnline)
+		Console.WriteLine("8. Name for online CFG (will overwrite existing ones): {0}", Name)
+		Console.WriteLine("9. Download other configs (will overwrite existing ones)")
+		Console.WriteLine("?. Secret")
 		StyleConsole()
 		If FirstTimeRun = True Then
 			Console.ForegroundColor = ConsoleColor.Green
-			Console.Write(vbCrLf + "This is a complete overhaul that gives you complete control over all sides of the generation. I decided it would be better if you could blacklist/whitelist things such as color of the crosshair since yellow really doesn't work for me ever since I tend to lose it a lot and keep crosshair generating to standards that people might actually use. Obviously you can now change it all for yourself so if you wanted a 100 size crosshair to be generated you could. This will be confusing at first to use and things such as disabling a certain aspect ratio disables all the resolutions and you must re-enable them etc but I will look into ways around that. Hope you enjoy this new version! :)" + vbCrLf + vbCrLf + "BiZR" + vbCrLf + vbCrLf)
+			Console.Write(vbCrLf + "Well, seems like now I am actually OUT of ideas/features that could benefit this program further. Other than some QoL changes such as listing the files on the server instead of having to check a web link yourself etc and limiting the amount of config files certain people can upload. Nothing new has come in this update except the new additions. Hope you enjoy! ^_^" + vbCrLf + vbCrLf + "BiZR" + vbCrLf + vbCrLf)
 			Console.ResetColor()
 			FirstTimeRun = False
 			SaveSettings()
-			Threading.Thread.Sleep(1000)
 		End If
 		Dim UserInput As String = Console.ReadLine
 		Select Case UserInput
@@ -128,10 +139,48 @@ Module Module1
 					WriteCFG = False
 					Main()
 				End If
+			Case 7
+				If WriteCFGOnline = False Then
+					WriteCFGOnline = True
+					Main()
+				Else
+					WriteCFGOnline = False
+					Main()
+				End If
+			Case 8
+				SetName()
+			Case 9
+				DownloadConfigs()
+			Case 69
+				Console.Clear()
+				Console.WriteLine(" #####   #####  
+#     # #     # 
+#       #     # 
+######   ###### 
+#     #       # 
+#     # #     # 
+ #####   #####  ")
+				Console.WriteLine("
+#     #        #####  ####### ######  
+ #   #        #     # #     # #     # 
+  # #         #       #     # #     # 
+   #    ##### #  #### #     # #     # 
+  # #         #     # #     # #     # 
+ #   #        #     # #     # #     # 
+#     #        #####  ####### ######  ")
+				Threading.Thread.Sleep(1000)
+				MiniMain()
 			Case Else
 				Main()
 		End Select
 		Console.ReadLine()
+	End Sub
+
+	Sub SetName()
+		Console.Clear()
+		Console.WriteLine("Please enter the name that you would like your online configs to be called (unique names to prevent overlapping config):")
+		Name = Console.ReadLine
+		Main()
 	End Sub
 
 	Sub GenerateSetup()
@@ -232,7 +281,6 @@ Module Module1
 			Next
 		End If
 
-		Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + CFGName + ".cfg")
 		Dim RandomValue1 As Integer
 		Dim RandomValue2 As Integer
 		Dim WriteCrosshair As Boolean = False
@@ -490,6 +538,7 @@ Module Module1
 		Next
 
 		If WriteCFG = True Then
+			Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + CFGName + ".cfg")
 			If Settings(0) = "Yes" Then
 				objStreamWriter.WriteLine("cl_crosshairsize {0}", CrosshairSize)
 			End If
@@ -549,7 +598,18 @@ Module Module1
 			objStreamWriter.Close()
 		End If
 
-		objStreamWriter.Close()
+
+		If WriteCFGOnline = True Then
+			Try
+				Dim FullCFG As String = IO.File.ReadAllText(CFGPath + "\" + CFGName + ".cfg")
+				Dim SendData As WebRequest = WebRequest.Create("http://95.172.92.86/cfg/post.php?test=" & FullCFG & "&filename=" & Name)
+				SendData.GetResponse()
+				Console.WriteLine("Online CFG written successfully.")
+			Catch ex As Exception
+				Console.WriteLine("Failed to write to online CFG.")
+			End Try
+		End If
+
 		Console.WriteLine("Do you want to generate again? Y/N")
 		StyleConsole()
 		Dim UserInput As String = Console.ReadLine
@@ -659,6 +719,8 @@ Module Module1
 		My.Settings.HandToUse.AddRange(HandToUse)
 		My.Settings.HandToUseIndex = HandToUseIndex
 		My.Settings.FirstTimeRun = FirstTimeRun
+		My.Settings.WriteCFGOnline = WriteCFGOnline
+		My.Settings.Name = Name
 		My.Settings.Save()
 	End Sub
 
@@ -1090,6 +1152,43 @@ Module Module1
 		Next
 	End Sub
 
+	Sub DownloadConfigs()
+		Console.Clear()
+		StyleConsole()
+		Console.WriteLine("Welcome to the CFG downloader, enter the name of the CFG you want to download now.")
+		Console.WriteLine("You can find a list of them here: http://95.172.92.86/cfg/")
+		Console.WriteLine("The .cfg part is not required. It will be removed automatically if you add it.")
+		StyleConsole()
+
+		Dim FileToDownload As String = Console.ReadLine
+
+		If FileToDownload.Contains(".cfg") = True Then
+			FileToDownload = FileToDownload.Replace(".cfg", "")
+		End If
+
+		Dim Client As WebClient = New WebClient()
+
+		Try
+			Dim Reader As StreamReader = New StreamReader(Client.OpenRead("http://95.172.92.86/cfg/" + FileToDownload + ".cfg"))
+			Dim DisplayCFG As String = Reader.ReadToEnd
+			Dim objStreamWriter As StreamWriter = New StreamWriter(CFGPath + "\" + FileToDownload + ".cfg")
+			objStreamWriter.Write(DisplayCFG)
+			objStreamWriter.Close()
+			Console.Clear()
+			StyleConsole()
+			Console.WriteLine("This is the config:")
+			Console.WriteLine(DisplayCFG)
+			Console.WriteLine("Press enter when you are ready to return to the main menu.")
+			StyleConsole()
+			Console.ReadLine()
+			Main()
+		Catch ex As Exception
+			Console.WriteLine("File failed to download. Press enter to return to the main menu.")
+			Console.ReadLine()
+			Main()
+		End Try
+	End Sub
+
 	Function FlipFlopBoolean(ByRef InputValue)
 		If InputValue = True Then
 			InputValue = False
@@ -1098,4 +1197,1004 @@ Module Module1
 		End If
 		Return InputValue
 	End Function
+
+	Public Team1 As String
+	Public Team2 As String
+	Public Team1Score As Integer
+	Public Team2Score As Integer
+	Public RandomWinner As Integer = Rand.Next(0, 101)
+	Public HalfTime As Boolean = True
+	Public KnifeRound As Boolean = True
+	Public MapPool(6) As String
+	Public ScrambledMapPool(6) As String
+	Public SideCT As String
+	Public SideT As String
+	Public SideCTPercent As Integer
+	Public SideTPercent As Integer
+	Public Team1Side As String
+	Public Team2Side As String
+	Public BestOf As Integer
+	Public Team1Maps As Integer
+	Public Team2Maps As Integer
+	Public Map1Score As String
+	Public Map2Score As String
+	Public Map3Score As String
+	Public Map1Winner As String
+	Public Map2Winner As String
+	Public Map3Winner As String
+	Public Map1Loser As String
+	Public Map2Loser As String
+	Public Map3Loser As String
+	Public ChooseMaps As Boolean = False
+
+
+	Public Sub MiniMain()
+		Console.Clear()
+		StyleConsole()
+		RandomWinner = Rand.Next(0, 101)
+		Team1Score = 0
+		Team2Score = 0
+		Team1 = ""
+		Team2 = ""
+		Team1Maps = 0
+		Team2Maps = 0
+		Map1Score = ""
+		Map2Score = ""
+		Map3Score = ""
+		Map1Winner = ""
+		Map2Winner = ""
+		Map3Winner = ""
+		Map1Loser = ""
+		Map2Loser = ""
+		Map3Loser = ""
+		MapPool(0) = "Cache"
+		MapPool(1) = "Cobblestone"
+		MapPool(2) = "Inferno"
+		MapPool(3) = "Mirage"
+		MapPool(4) = "Nuke"
+		MapPool(5) = "Overpass"
+		MapPool(6) = "Train"
+		If ChooseMaps = False Then
+			Array.Clear(ScrambledMapPool, 0, ScrambledMapPool.Length)
+			For i = 0 To 6
+				Dim RandomMap As Integer
+				RandomMap = Rand.Next(0, 7)
+				While ScrambledMapPool.Contains(MapPool(RandomMap))
+					RandomMap = Rand.Next(0, 7)
+				End While
+				ScrambledMapPool(i) = MapPool(RandomMap)
+			Next
+		End If
+
+		Console.WriteLine("OH HELLO THERE!" & vbCrLf & "This is my score generator for CSGO, not too advanced but enjoyable ;D glad you found it!" & vbCrLf & "Enter your choice now:")
+		Console.WriteLine("1. Setup Game")
+		Console.WriteLine("2. Configure Options")
+		Console.WriteLine("3. Select Maps")
+		Console.WriteLine("4. Manual Maps?: {0}", ChooseMaps)
+		Console.WriteLine("5. Back to CFG Generator")
+		StyleConsole()
+		Dim UserChoice As String = Console.ReadLine
+		Select Case UserChoice
+			Case 1
+				GameSetup()
+			Case 2
+				Configure()
+			Case 3
+				Maps()
+			Case 4
+				If ChooseMaps = True Then
+					ChooseMaps = False
+				Else
+					ChooseMaps = True
+				End If
+				MiniMain()
+			Case 5
+				Main()
+			Case Else
+				MiniMain()
+		End Select
+	End Sub
+	Sub Configure()
+		Console.Clear()
+		Console.WriteLine("1. Half Time: {0}", HalfTime)
+		Console.WriteLine("2. Knife Round: {0}", KnifeRound)
+		Console.WriteLine("9. Home")
+
+		Dim UserChoice As String = Console.ReadLine
+		Select Case UserChoice
+			Case 1
+				If HalfTime = True Then
+					HalfTime = False
+				Else
+					HalfTime = True
+				End If
+				Configure()
+			Case 2
+				If KnifeRound = True Then
+					KnifeRound = False
+				Else
+					KnifeRound = True
+				End If
+				Configure()
+			Case 9
+				MiniMain()
+			Case Else
+				Configure()
+		End Select
+	End Sub
+	Sub GameSetup()
+		Console.Clear()
+		Console.WriteLine("Is overtime possible in the game you want to predict? Y/N")
+		Dim Overtime As String = Console.ReadLine
+		While Overtime <> "Y" And Overtime <> "N"
+			Console.Clear()
+			Console.WriteLine("That is not valid, please try again now.")
+			Console.WriteLine("Is overtime possible in the game you want to predict? Y/N")
+			Overtime = Console.ReadLine
+		End While
+		Console.Clear()
+		Console.WriteLine("Please enter the name of the first team now.")
+		Team1 = Console.ReadLine
+		Console.WriteLine("Please enter the name of the second team now.")
+		Team2 = Console.ReadLine
+		Console.Clear()
+		Console.WriteLine("Do you want a BO1 or BO3?")
+		Console.WriteLine("1. BO1")
+		Console.WriteLine("2. BO3")
+		BestOf = Console.ReadLine
+		While BestOf <> "1" And BestOf <> "2"
+			Console.WriteLine("That is not valid, please try again now.")
+			Console.WriteLine("Do you want a BO1 or BO3?")
+			Console.WriteLine("1. BO1")
+			Console.WriteLine("2. BO3")
+			BestOf = Console.ReadLine
+		End While
+		If BestOf = 1 Then
+			BestOf = 0
+		Else
+			BestOf = 2
+		End If
+		If Overtime = "Y" Then
+			OvertimeTrue()
+		End If
+
+		If Overtime = "N" Then
+			OvertimeFalse()
+		End If
+	End Sub
+	Sub OvertimeTrue()
+		MapPool(0) = "Cache"
+		MapPool(1) = "Cobblestone"
+		MapPool(2) = "Inferno"
+		MapPool(3) = "Mirage"
+		MapPool(4) = "Nuke"
+		MapPool(5) = "Overpass"
+		MapPool(6) = "Train"
+		If ChooseMaps = False Then
+			Array.Clear(ScrambledMapPool, 0, ScrambledMapPool.Length)
+			For i = 0 To 6
+				Dim RandomMap As Integer
+				RandomMap = Rand.Next(0, 7)
+				While ScrambledMapPool.Contains(MapPool(RandomMap))
+					RandomMap = Rand.Next(0, 7)
+				End While
+				ScrambledMapPool(i) = MapPool(RandomMap)
+			Next
+		End If
+		Dim StartingSide As String = "0"
+		Console.Clear()
+		Console.WriteLine("What format will the overtime be?" & vbCrLf & "1. MR6" & vbCrLf & "2. MR10")
+		Dim OvertimeFormat As String = Console.ReadLine
+		While OvertimeFormat <> "1" And OvertimeFormat <> "2"
+			Console.WriteLine("That is not valid, please try again now.")
+			OvertimeFormat = Console.ReadLine
+		End While
+
+		For MapsPlayed As Integer = 0 To BestOf
+			Team1Score = 0
+			Team2Score = 0
+			Console.Clear()
+			Console.WriteLine("The map is: {0}", ScrambledMapPool(MapsPlayed))
+			If BestOf > 0 Then
+				Console.WriteLine("Map {0} / 3", MapsPlayed + 1)
+				If MapsPlayed = 0 Then
+					Console.WriteLine("Map 1: {0}, Map 2: {1}, Map 3: {2}", ScrambledMapPool(0), ScrambledMapPool(1), ScrambledMapPool(2))
+				End If
+				If MapsPlayed = 1 Then
+					Console.ForegroundColor = ConsoleColor.Red
+					Console.Write("Map 1: {0}, ", ScrambledMapPool(0))
+					Console.ForegroundColor = ConsoleColor.Gray
+					Console.Write("Map 2: {0}, Map 3: {1}", ScrambledMapPool(1), ScrambledMapPool(2))
+				End If
+				If MapsPlayed = 2 Then
+					Console.ForegroundColor = ConsoleColor.Red
+					Console.Write("Map 1: {0}, Map 2: {1}, ", ScrambledMapPool(0), ScrambledMapPool(1))
+					Console.ForegroundColor = ConsoleColor.Gray
+					Console.Write("Map 3: {0}", ScrambledMapPool(2))
+				End If
+				Console.WriteLine("")
+				Console.WriteLine("Series Score: {0}: {1} - {2}: {3}", Team1, Team1Maps, Team2, Team2Maps)
+			End If
+			If ScrambledMapPool(MapsPlayed) = "Cache" Then
+				SideCTPercent = 54
+				SideTPercent = 46
+			End If
+
+			If ScrambledMapPool(MapsPlayed) = "Inferno" Then
+				SideCTPercent = 49
+				SideTPercent = 51
+			End If
+
+			If ScrambledMapPool(MapsPlayed) = "Cobblestone" Then
+				SideCTPercent = 52
+				SideTPercent = 48
+			End If
+
+			If ScrambledMapPool(MapsPlayed) = "Mirage" Then
+				SideCTPercent = 54
+				SideTPercent = 46
+			End If
+
+			If ScrambledMapPool(MapsPlayed) = "Nuke" Then
+				SideCTPercent = 60
+				SideTPercent = 40
+			End If
+
+			If ScrambledMapPool(MapsPlayed) = "Overpass" Then
+				SideCTPercent = 57
+				SideTPercent = 43
+			End If
+
+			If ScrambledMapPool(MapsPlayed) = "Train" Then
+				SideCTPercent = 70
+				SideTPercent = 30
+			End If
+
+			If KnifeRound = True Then
+				RandomWinner = Rand.Next(0, 101)
+				If RandomWinner >= 50 Then
+					Console.WriteLine("{0} have won the knife round.", Team1)
+					If SideCTPercent > SideTPercent Then
+						Console.WriteLine("{0} have went with the CT side.", Team1)
+						SideCT = Team1
+						SideT = Team2
+						Team1Side = "CT"
+						Team2Side = "T"
+					Else
+						Console.WriteLine("{0} have went with the T side.", Team1)
+						SideT = Team1
+						SideCT = Team2
+						Team2Side = "CT"
+						Team1Side = "T"
+					End If
+				Else
+					Console.WriteLine("{0} have won the knife round.", Team2)
+					If SideCTPercent > SideTPercent Then
+						Console.WriteLine("{0} have went with the CT side.", Team2)
+						SideCT = Team2
+						SideT = Team1
+						Team2Side = "CT"
+						Team1Side = "T"
+					Else
+						Console.WriteLine("{0} have went with the T side.", Team2)
+						SideT = Team2
+						SideCT = Team1
+						Team1Side = "CT"
+						Team2Side = "T"
+					End If
+					SideCT = Team2
+					SideT = Team1
+				End If
+			Else
+				Console.WriteLine("Select the starting side of {0} now.", Team1)
+				Console.WriteLine("1. CT")
+				Console.WriteLine("2. T")
+				StartingSide = Console.ReadLine
+				While StartingSide <> "1" And StartingSide <> "2"
+					Console.WriteLine("That is not valid, try again.")
+					StartingSide = Console.ReadLine
+				End While
+				If StartingSide = "1" Then
+					SideCT = Team1
+					Team1Side = "CT"
+					SideT = Team2
+					Team2Side = "T"
+				Else
+					SideT = Team1
+					Team1Side = "T"
+					SideCT = Team2
+					Team2Side = "CT"
+				End If
+			End If
+
+			System.Threading.Thread.Sleep(3000)
+			Dim LO3 As Integer = 3
+			Dim Countdown
+			For Countdown = 1 To 3
+				Console.WriteLine("Going live in {0}...", LO3)
+				LO3 = LO3 - 1
+				System.Threading.Thread.Sleep(1000)
+			Next
+
+			Console.Clear()
+
+
+			If OvertimeFormat = "1" Then
+				'Winning Scores
+				Dim WinningScores(10) As Integer
+				WinningScores(0) = "16"
+				For WinningScoresLoop As Integer = 1 To 10 Step 1
+					WinningScores(WinningScoresLoop) = 16 + (3 * WinningScoresLoop)
+				Next
+
+				'Max Rounds // DEPRECATED
+				Dim MaxRounds(10) As Integer
+				MaxRounds(0) = "30"
+				For WinningScoresLoop As Integer = 1 To 10 Step 1
+					MaxRounds(WinningScoresLoop) = 30 + (6 * WinningScoresLoop)
+				Next
+
+				'Half times
+				Dim HalfTimes(10) As Integer
+				HalfTimes(0) = "16"
+				For WinningScoresLoop As Integer = 1 To 10 Step 1
+					HalfTimes(WinningScoresLoop) = 28 + (3 * WinningScoresLoop)
+				Next
+
+				'Start game
+				Dim i As Integer = 0
+				Do Until WinningScores.Contains(Team1Score) AndAlso Team2Score < Team1Score - 1 Or WinningScores.Contains(Team2Score) AndAlso Team1Score < Team2Score - 1
+					i = i + 1
+					'Wait between round beginnings and endings
+					If i > 1 Then
+						Console.WriteLine("")
+						System.Threading.Thread.Sleep(Rand.Next(500, 2001))
+					End If
+					'Halftime logic
+					If HalfTimes.Contains(i) Then
+						If SideCT = Team1 And SideT = Team2 Then
+							SideCT = Team2
+							SideT = Team1
+							Team1Side = "T"
+							Team2Side = "CT"
+						Else
+							SideCT = Team1
+							SideT = Team2
+							Team1Side = "CT"
+							Team2Side = "T"
+						End If
+					End If
+					If HalfTimes.Contains(i) And HalfTime = True Then
+						Dim Timer As Integer = 5
+						System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+						Console.Clear()
+						Console.WriteLine("Breaking for half time...")
+						System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+						For HalfTimeCount = 1 To 5
+							Console.WriteLine("Resuming in {0}...", Timer)
+							System.Threading.Thread.Sleep(1000)
+							Timer = Timer - 1
+							If HalfTimeCount = 5 Then
+								Console.Clear()
+							End If
+						Next
+						Console.WriteLine("The score is currently ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+					End If
+					'Begin round + round mechanics
+					RandomWinner = Rand.Next(0, 101)
+					If Team1Score = 45 And Team2Score < 45 Then
+						RandomWinner = 100
+					End If
+					If Team2Score = 45 And Team1Score < 45 Then
+						RandomWinner = 0
+					End If
+					Console.WriteLine("Round {0} ({1}) has begun...", i, ScrambledMapPool(MapsPlayed))
+					System.Threading.Thread.Sleep(Rand.Next(1000, 2001))
+					If RandomWinner >= SideTPercent Then
+						If SideCT = Team1 Then
+							Team1Score = Team1Score + 1
+							Console.WriteLine("{0} has taken the round.", Team1)
+							Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						Else
+							Team2Score = Team2Score + 1
+							Console.WriteLine("{0} has taken the round.", Team2)
+							Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						End If
+					Else
+						If SideT = Team1 Then
+							Team1Score = Team1Score + 1
+							Console.WriteLine("{0} has taken the round.", Team1)
+							Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						Else
+							Team2Score = Team2Score + 1
+							Console.WriteLine("{0} has taken the round.", Team2)
+							Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						End If
+					End If
+				Loop
+				If BestOf = 0 Then
+					System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+					DetermWin()
+				End If
+				System.Threading.Thread.Sleep(Rand.Next(1500, 3001))
+				If Team1Score > Team2Score Then
+					Team1Maps = Team1Maps + 1
+					Console.WriteLine("{0} have took Map {1}", Team1, ScrambledMapPool(MapsPlayed))
+				Else
+					Team2Maps = Team2Maps + 1
+					Console.WriteLine("{0} have took Map {1}", Team2, ScrambledMapPool(MapsPlayed))
+				End If
+
+				If MapsPlayed = 0 And Team1Score > Team2Score Then
+					Map1Winner = Team1
+					Map1Loser = Team2
+					Map1Score = String.Join(" - ", Team1Score, Team2Score)
+				End If
+
+				If MapsPlayed = 0 And Team1Score < Team2Score Then
+					Map1Winner = Team2
+					Map1Loser = Team1
+					Map1Score = String.Join(" - ", Team2Score, Team1Score)
+				End If
+
+				If MapsPlayed = 1 And Team1Score > Team2Score Then
+					Map2Winner = Team1
+					Map2Loser = Team2
+					Map2Score = String.Join(" - ", Team1Score, Team2Score)
+				End If
+
+				If MapsPlayed = 1 And Team1Score < Team2Score Then
+					Map2Winner = Team2
+					Map2Loser = Team1
+					Map2Score = String.Join(" - ", Team2Score, Team1Score)
+				End If
+
+				If MapsPlayed = 2 And Team1Score > Team2Score Then
+					Map3Winner = Team1
+					Map3Loser = Team2
+					Map3Score = String.Join(" - ", Team1Score, Team2Score)
+				End If
+
+				If MapsPlayed = 2 And Team1Score < Team2Score Then
+					Map3Winner = Team2
+					Map3Loser = Team1
+					Map3Score = String.Join(" - ", Team2Score, Team1Score)
+				End If
+
+				If Team1Maps = 2 Then
+					System.Threading.Thread.Sleep(Rand.Next(1500, 3001))
+					Exit For
+				End If
+				If Team2Maps = 2 Then
+					System.Threading.Thread.Sleep(Rand.Next(1500, 3001))
+					Exit For
+				End If
+				System.Threading.Thread.Sleep(Rand.Next(3000, 6001))
+			Else
+				'Winning Scores
+				Dim WinningScores(10) As Integer
+				WinningScores(0) = "16"
+				For WinningScoresLoop As Integer = 1 To 10 Step 1
+					WinningScores(WinningScoresLoop) = 16 + (5 * WinningScoresLoop)
+				Next
+
+				'Max Rounds // DEPRECATED
+				Dim MaxRounds(10) As Integer
+				MaxRounds(0) = "30"
+				For WinningScoresLoop As Integer = 1 To 10 Step 1
+					MaxRounds(WinningScoresLoop) = 30 + (10 * WinningScoresLoop)
+				Next
+
+				'Half times
+				Dim HalfTimes(10) As Integer
+				HalfTimes(0) = "16"
+				For WinningScoresLoop As Integer = 1 To 10 Step 1
+					HalfTimes(WinningScoresLoop) = 26 + (5 * WinningScoresLoop)
+				Next
+
+				'Start game
+				Dim i As Integer = 0
+				Do Until WinningScores.Contains(Team1Score) AndAlso Team2Score < Team1Score - 1 Or WinningScores.Contains(Team2Score) AndAlso Team1Score < Team2Score - 1
+					i = i + 1
+					'Wait between round beginnings and endings
+					If i > 1 Then
+						Console.WriteLine("")
+						System.Threading.Thread.Sleep(Rand.Next(500, 2001))
+					End If
+					'Halftime logic
+					If HalfTimes.Contains(i) Then
+						If SideCT = Team1 And SideT = Team2 Then
+							SideCT = Team2
+							SideT = Team1
+							Team1Side = "T"
+							Team2Side = "CT"
+						Else
+							SideCT = Team1
+							SideT = Team2
+							Team1Side = "CT"
+							Team2Side = "T"
+						End If
+					End If
+					If HalfTimes.Contains(i) And HalfTime = True Then
+						Dim Timer As Integer = 5
+						System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+						Console.Clear()
+						Console.WriteLine("Breaking for half time...")
+						System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+						For HalfTimeCount = 1 To 5
+							Console.WriteLine("Resuming in {0}...", Timer)
+							System.Threading.Thread.Sleep(1000)
+							Timer = Timer - 1
+							If HalfTimeCount = 5 Then
+								Console.Clear()
+							End If
+						Next
+						Console.WriteLine("The score is currently ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+					End If
+					'Begin round + round mechanics
+					RandomWinner = Rand.Next(0, 101)
+					If Team1Score = 45 And Team2Score < 45 Then
+						RandomWinner = 100
+					End If
+					If Team2Score = 45 And Team1Score < 45 Then
+						RandomWinner = 0
+					End If
+					Console.WriteLine("Round {0} ({1}) has begun...", i, ScrambledMapPool(MapsPlayed))
+					System.Threading.Thread.Sleep(Rand.Next(1000, 2001))
+					If RandomWinner >= SideTPercent Then
+						If SideCT = Team1 Then
+							Team1Score = Team1Score + 1
+							Console.WriteLine("{0} has taken the round.", Team1)
+							Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						Else
+							Team2Score = Team2Score + 1
+							Console.WriteLine("{0} has taken the round.", Team2)
+							Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						End If
+					Else
+						If SideT = Team1 Then
+							Team1Score = Team1Score + 1
+							Console.WriteLine("{0} has taken the round.", Team1)
+							Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						Else
+							Team2Score = Team2Score + 1
+							Console.WriteLine("{0} has taken the round.", Team2)
+							Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+						End If
+					End If
+				Loop
+				If BestOf = 0 Then
+					System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+					DetermWin()
+				End If
+				System.Threading.Thread.Sleep(Rand.Next(1500, 3001))
+				If Team1Score > Team2Score Then
+					Team1Maps = Team1Maps + 1
+					Console.WriteLine("{0} have took Map {1}", Team1, ScrambledMapPool(MapsPlayed))
+				Else
+					Team2Maps = Team2Maps + 1
+					Console.WriteLine("{0} have took Map {1}", Team2, ScrambledMapPool(MapsPlayed))
+				End If
+				If Team1Maps = 2 Then
+					System.Threading.Thread.Sleep(Rand.Next(1500, 3001))
+					Exit For
+				End If
+				If Team2Maps = 2 Then
+					System.Threading.Thread.Sleep(Rand.Next(1500, 3001))
+					Exit For
+				End If
+				System.Threading.Thread.Sleep(Rand.Next(3000, 6001))
+			End If
+		Next
+		System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+		Console.Clear()
+		Dim Winner As String = ""
+		If Team1Maps > Team2Maps Then
+			Winner = Team1
+		Else
+			Winner = Team2
+		End If
+		If Winner <> "Draw" Then
+			Console.WriteLine("The winner is {0}.", Winner)
+		End If
+		If Winner = Team1 Then
+			Console.WriteLine("The series score ended as {0} - {1}.", Team1Maps, Team2Maps)
+		Else
+			Console.WriteLine("The series score ended as {0} - {1}.", Team2Maps, Team1Maps)
+		End If
+		Console.WriteLine("Map Scores:")
+		Console.WriteLine("Map 1 ({0}): {1}: {2} {3}", ScrambledMapPool(0), Map1Winner, Map1Score, Map1Loser)
+		Console.WriteLine("Map 2 ({0}): {1}: {2} {3}", ScrambledMapPool(1), Map2Winner, Map2Score, Map2Loser)
+		If Not String.IsNullOrEmpty(Map3Winner) Then
+			Console.WriteLine("Map 3 ({0}): {1}: {2} {3}", ScrambledMapPool(2), Map3Winner, Map3Score, Map3Loser)
+		End If
+		Console.ReadLine()
+		MiniMain()
+	End Sub
+	Sub OvertimeFalse()
+		MapPool(0) = "Cache"
+		MapPool(1) = "Cobblestone"
+		MapPool(2) = "Inferno"
+		MapPool(3) = "Mirage"
+		MapPool(4) = "Nuke"
+		MapPool(5) = "Overpass"
+		MapPool(6) = "Train"
+		If ChooseMaps = False Then
+			Array.Clear(ScrambledMapPool, 0, ScrambledMapPool.Length)
+			For i = 0 To 6
+				Dim RandomMap As Integer
+				RandomMap = Rand.Next(0, 7)
+				While ScrambledMapPool.Contains(MapPool(RandomMap))
+					RandomMap = Rand.Next(0, 7)
+				End While
+				ScrambledMapPool(i) = MapPool(RandomMap)
+			Next
+		End If
+		Dim StartingSide As String = "0"
+		For MapsPlayed As Integer = 0 To BestOf
+			Team1Score = 0
+			Team2Score = 0
+			Console.Clear()
+			Console.WriteLine("The map is: {0}", ScrambledMapPool(MapsPlayed))
+			If BestOf > 0 Then
+				Console.WriteLine("Map {0} / 3", MapsPlayed + 1)
+				If MapsPlayed = 0 Then
+					Console.WriteLine("Map 1: {0}, Map 2: {1}, Map 3: {2}", ScrambledMapPool(0), ScrambledMapPool(1), ScrambledMapPool(2))
+				End If
+				If MapsPlayed = 1 Then
+					Console.ForegroundColor = ConsoleColor.Red
+					Console.Write("Map 1: {0}, ", ScrambledMapPool(0))
+					Console.ForegroundColor = ConsoleColor.Gray
+					Console.Write("Map 2: {0}, Map 3: {1}", ScrambledMapPool(1), ScrambledMapPool(2))
+				End If
+				If MapsPlayed = 2 Then
+					Console.ForegroundColor = ConsoleColor.Red
+					Console.Write("Map 1: {0}, Map 2: {1}, ", ScrambledMapPool(0), ScrambledMapPool(1))
+					Console.ForegroundColor = ConsoleColor.Gray
+					Console.Write("Map 3: {0}", ScrambledMapPool(2))
+				End If
+				Console.WriteLine("")
+				Console.WriteLine("Series Score: {0}: {1} - {2}: {3}", Team1, Team1Maps, Team2, Team2Maps)
+			End If
+			If ScrambledMapPool(0) = "Cache" Then
+				SideCTPercent = 54
+				SideTPercent = 46
+			End If
+
+			If ScrambledMapPool(0) = "Inferno" Then
+				SideCTPercent = 49
+				SideTPercent = 51
+			End If
+
+			If ScrambledMapPool(0) = "Cobblestone" Then
+				SideCTPercent = 52
+				SideTPercent = 48
+			End If
+
+			If ScrambledMapPool(0) = "Mirage" Then
+				SideCTPercent = 54
+				SideTPercent = 46
+			End If
+
+			If ScrambledMapPool(0) = "Nuke" Then
+				SideCTPercent = 60
+				SideTPercent = 40
+			End If
+
+			If ScrambledMapPool(0) = "Overpass" Then
+				SideCTPercent = 57
+				SideTPercent = 43
+			End If
+
+			If ScrambledMapPool(0) = "Train" Then
+				SideCTPercent = 70
+				SideTPercent = 30
+			End If
+
+			If KnifeRound = True Then
+				RandomWinner = Rand.Next(0, 101)
+				If RandomWinner >= 50 Then
+					Console.WriteLine("{0} have won the knife round.", Team1)
+					If SideCTPercent > SideTPercent Then
+						Console.WriteLine("{0} have went with the CT side.", Team1)
+						SideCT = Team1
+						SideT = Team2
+						Team1Side = "CT"
+						Team2Side = "T"
+					Else
+						Console.WriteLine("{0} have went with the T side.", Team1)
+						SideT = Team1
+						SideCT = Team2
+						Team2Side = "CT"
+						Team1Side = "T"
+					End If
+				Else
+					Console.WriteLine("{0} have won the knife round.", Team2)
+					If SideCTPercent > SideTPercent Then
+						Console.WriteLine("{0} have went with the CT side.", Team2)
+						SideCT = Team2
+						SideT = Team1
+						Team2Side = "CT"
+						Team1Side = "T"
+					Else
+						Console.WriteLine("{0} have went with the T side.", Team2)
+						SideT = Team2
+						SideCT = Team1
+						Team1Side = "CT"
+						Team2Side = "T"
+					End If
+					SideCT = Team2
+					SideT = Team1
+				End If
+			Else
+				Console.WriteLine("Select the starting side of {0} now.", Team1)
+				Console.WriteLine("1. CT")
+				Console.WriteLine("2. T")
+				StartingSide = Console.ReadLine
+				While StartingSide <> "1" And StartingSide <> "2"
+					Console.WriteLine("That is not valid, try again.")
+					StartingSide = Console.ReadLine
+				End While
+				If StartingSide = "1" Then
+					SideCT = Team1
+					Team1Side = "CT"
+					SideT = Team2
+					Team2Side = "T"
+				Else
+					SideT = Team1
+					Team1Side = "T"
+					SideCT = Team2
+					Team2Side = "CT"
+				End If
+			End If
+
+			System.Threading.Thread.Sleep(3000)
+			Dim LO3 As Integer = 3
+			Dim Countdown
+			For Countdown = 1 To 3
+				Console.WriteLine("Going live in {0}...", LO3)
+				LO3 = LO3 - 1
+				System.Threading.Thread.Sleep(1000)
+			Next
+
+			Console.Clear()
+			'Winning Scores
+			Dim WinningScores(10) As Integer
+			WinningScores(0) = "16"
+			For WinningScoresLoop As Integer = 1 To 10 Step 1
+				WinningScores(WinningScoresLoop) = 16 + (3 * WinningScoresLoop)
+			Next
+
+			'Max Rounds // DEPRECATED
+			Dim MaxRounds(10) As Integer
+			MaxRounds(0) = "30"
+			For WinningScoresLoop As Integer = 1 To 10 Step 1
+				MaxRounds(WinningScoresLoop) = 30 + (6 * WinningScoresLoop)
+			Next
+
+			'Half times
+			Dim HalfTimes(10) As Integer
+			HalfTimes(0) = "16"
+			For WinningScoresLoop As Integer = 1 To 10 Step 1
+				HalfTimes(WinningScoresLoop) = 28 + (3 * WinningScoresLoop)
+			Next
+
+			'Start game
+			Dim i As Integer = 0
+			Do Until WinningScores.Contains(Team1Score) AndAlso Team2Score < Team1Score - 1 Or WinningScores.Contains(Team2Score) AndAlso Team1Score < Team2Score - 1
+				i = i + 1
+				'Wait between round beginnings and endings
+				If i > 1 Then
+					Console.WriteLine("")
+					System.Threading.Thread.Sleep(Rand.Next(500, 2001))
+				End If
+				'Halftime logic
+				If HalfTimes.Contains(i) Then
+					If SideCT = Team1 And SideT = Team2 Then
+						SideCT = Team2
+						SideT = Team1
+						Team1Side = "T"
+						Team2Side = "CT"
+					Else
+						SideCT = Team1
+						SideT = Team2
+						Team1Side = "CT"
+						Team2Side = "T"
+					End If
+				End If
+				If HalfTimes.Contains(i) And HalfTime = True Then
+					Dim Timer As Integer = 5
+					System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+					Console.Clear()
+					Console.WriteLine("Breaking for half time...")
+					System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+					For HalfTimeCount = 1 To 5
+						Console.WriteLine("Resuming in {0}...", Timer)
+						System.Threading.Thread.Sleep(1000)
+						Timer = Timer - 1
+						If HalfTimeCount = 5 Then
+							Console.Clear()
+						End If
+					Next
+					Console.WriteLine("The score is currently ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+					System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+				End If
+				'Begin round + round mechanics
+				RandomWinner = Rand.Next(0, 101)
+				If Team1Score = 15 And Team2Score = 15 Then
+					Exit For
+				End If
+				Console.WriteLine("Round {0} ({1}) has begun...", i, ScrambledMapPool(MapsPlayed))
+				System.Threading.Thread.Sleep(Rand.Next(1000, 2001))
+				If RandomWinner >= SideTPercent Then
+					If SideCT = Team1 Then
+						Team1Score = Team1Score + 1
+						Console.WriteLine("{0} has taken the round.", Team1)
+						Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+					Else
+						Team2Score = Team2Score + 1
+						Console.WriteLine("{0} has taken the round.", Team2)
+						Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+					End If
+				Else
+					If SideT = Team1 Then
+						Team1Score = Team1Score + 1
+						Console.WriteLine("{0} has taken the round.", Team1)
+						Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+					Else
+						Team2Score = Team2Score + 1
+						Console.WriteLine("{0} has taken the round.", Team2)
+						Console.WriteLine("The score is now ({0}) {1}: {2} - ({3}) {4}: {5}", Team1Side, Team1, Team1Score, Team2Side, Team2, Team2Score)
+					End If
+				End If
+			Loop
+			If BestOf = 0 Then
+				System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+				Exit Sub
+			End If
+			System.Threading.Thread.Sleep(Rand.Next(1500, 3001))
+			If Team1Score > Team2Score Then
+				Team1Maps = Team1Maps + 1
+				Console.WriteLine("{0} have took Map {1}", Team1, ScrambledMapPool(MapsPlayed))
+			Else
+				Team2Maps = Team2Maps + 1
+				Console.WriteLine("{0} have took Map {1}", Team2, ScrambledMapPool(MapsPlayed))
+			End If
+
+			If MapsPlayed = 0 And Team1Score > Team2Score Then
+				Map1Winner = Team1
+				Map1Loser = Team2
+				Map1Score = String.Join(" - ", Team1Score, Team2Score)
+			End If
+
+			If MapsPlayed = 0 And Team1Score < Team2Score Then
+				Map1Winner = Team2
+				Map1Loser = Team1
+				Map1Score = String.Join(" - ", Team2Score, Team1Score)
+			End If
+
+			If MapsPlayed = 1 And Team1Score > Team2Score Then
+				Map2Winner = Team1
+				Map2Loser = Team2
+				Map2Score = String.Join(" - ", Team1Score, Team2Score)
+			End If
+
+			If MapsPlayed = 1 And Team1Score < Team2Score Then
+				Map2Winner = Team2
+				Map2Loser = Team1
+				Map2Score = String.Join(" - ", Team2Score, Team1Score)
+			End If
+
+			If MapsPlayed = 2 And Team1Score > Team2Score Then
+				Map3Winner = Team1
+				Map3Loser = Team2
+				Map3Score = String.Join(" - ", Team1Score, Team2Score)
+			End If
+
+			If MapsPlayed = 2 And Team1Score < Team2Score Then
+				Map3Winner = Team2
+				Map3Loser = Team1
+				Map3Score = String.Join(" - ", Team2Score, Team1Score)
+			End If
+
+			If Team1Maps = 2 Then
+				System.Threading.Thread.Sleep(Rand.Next(1500, 3001))
+				Exit For
+			End If
+			If Team2Maps = 2 Then
+				System.Threading.Thread.Sleep(Rand.Next(1500, 3001))
+				Exit For
+			End If
+			System.Threading.Thread.Sleep(Rand.Next(3000, 6001))
+		Next
+		System.Threading.Thread.Sleep(Rand.Next(500, 1501))
+		Console.Clear()
+		Dim Winner As String = ""
+		If Team1Maps > Team2Maps Then
+			Winner = Team1
+		Else
+			Winner = Team2
+		End If
+		If Winner <> "Draw" Then
+			Console.WriteLine("The winner is {0}.", Winner)
+		End If
+		If Winner = Team1 Then
+			Console.WriteLine("The series score ended as {0} - {1}.", Team1Maps, Team2Maps)
+		Else
+			Console.WriteLine("The series score ended as {0} - {1}.", Team2Maps, Team1Maps)
+		End If
+		Console.WriteLine("Map Scores:")
+		Console.WriteLine("Map 1 ({0}): {1}: {2} {3}", ScrambledMapPool(0), Map1Winner, Map1Score, Map1Loser)
+		Console.WriteLine("Map 2 ({0}): {1}: {2} {3}", ScrambledMapPool(1), Map2Winner, Map2Score, Map2Loser)
+		If Not String.IsNullOrEmpty(Map3Winner) Then
+			Console.WriteLine("Map 3 ({0}): {1}: {2} {3}", ScrambledMapPool(2), Map3Winner, Map3Score, Map3Loser)
+		End If
+		Console.ReadLine()
+		MiniMain()
+	End Sub
+	Sub DetermWin()
+		Console.Clear()
+		Dim Winner As String = ""
+		If Team1Score > Team2Score Then
+			Winner = Team1
+		Else
+			Winner = Team2
+		End If
+		If Team1Score = Team2Score Then
+			Winner = "Draw"
+		End If
+		If Winner <> "Draw" Then
+			Console.WriteLine("The winner is {0}.", Winner)
+		Else
+			Console.WriteLine("The game ended as a draw.")
+		End If
+		If Winner = Team1 Then
+			Console.WriteLine("Map Score:")
+			Console.WriteLine("Map 1 ({0}): {1}: {2} - {3}: {4}", ScrambledMapPool(0), Team1, Team1Score, Team2, Team2Score)
+		Else
+			Console.WriteLine("Map Score:")
+			Console.WriteLine("Map 1 ({0}): {1}: {2} - {3}: {4}", ScrambledMapPool(0), Team2, Team2Score, Team1, Team1Score)
+		End If
+		Console.ReadLine()
+		MiniMain()
+	End Sub
+	Sub Maps()
+		ChooseMaps = True
+		MapPool(0) = "Cache"
+		MapPool(1) = "Cobblestone"
+		MapPool(2) = "Inferno"
+		MapPool(3) = "Mirage"
+		MapPool(4) = "Nuke"
+		MapPool(5) = "Overpass"
+		MapPool(6) = "Train"
+		Array.Clear(ScrambledMapPool, 0, ScrambledMapPool.Length)
+		For i = 0 To 2
+			Console.Clear()
+			Console.WriteLine("Choose map {0}:", i + 1)
+			For maps As Integer = 0 To 6
+				Console.Write("{0}. ", maps)
+				Console.Write(MapPool(maps))
+				Console.WriteLine("")
+			Next
+			Dim UserMap As String
+			UserMap = Console.ReadLine
+			While ScrambledMapPool.Contains(MapPool(UserMap))
+				Console.WriteLine("That is already part of the map pool, try again.")
+				UserMap = Console.ReadLine
+			End While
+			For maps As Integer = 0 To 6
+				If UserMap = maps Then
+					ScrambledMapPool(i) = MapPool(UserMap)
+				End If
+			Next
+		Next
+		Console.Clear()
+		For i = 0 To 2
+			Console.WriteLine(ScrambledMapPool(i))
+		Next
+		Console.ReadLine()
+		MiniMain()
+	End Sub
 End Module

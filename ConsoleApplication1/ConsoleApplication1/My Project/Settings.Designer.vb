@@ -444,6 +444,30 @@ Namespace My
                 Me("FirstTimeRun") = value
             End Set
         End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+        Public Property WriteCFGOnline() As Boolean
+            Get
+                Return CType(Me("WriteCFGOnline"),Boolean)
+            End Get
+            Set
+                Me("WriteCFGOnline") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("DefaultUser")>  _
+        Public Property Name() As String
+            Get
+                Return CType(Me("Name"),String)
+            End Get
+            Set
+                Me("Name") = value
+            End Set
+        End Property
     End Class
 End Namespace
 
