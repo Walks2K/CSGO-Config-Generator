@@ -20,6 +20,7 @@ Module Module1
 	Public BobVert As Double
 	Public Righthand As Double
 	Public Resolution As String
+	Public CrosshairDot As Double
 	Public Sens As Double
 	Public CFGPath As String = My.Settings.SavedCFGPath
 	Public WriteCFG As Boolean = My.Settings.WriteCFG
@@ -29,9 +30,9 @@ Module Module1
 	Public SupportedResolutionsSettings() As String = My.Settings.SupportedResolutionsSettings.Cast(Of String)().ToArray()
 	Public ResolutionAspectRatios() As String = {"4:3", "16:9", "16:10"}
 	Public ResolutionAspectRatiosUsed() As String = My.Settings.ResolutionAspectRatiosUsedList.Cast(Of String)().ToArray()
-	Public Settings() As String = {"Yes", "Yes", "No", "Yes", "Yes", "Yes", "Yes", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"}
+	Public Settings() As String = {"Yes", "Yes", "No", "Yes", "Yes", "Yes", "Yes", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"}
 	Public Version As String = "4.0"
-	Public WipeOptions As Boolean = False
+	Public WipeOptions As Boolean = True
 	Public CrosshairColorR As Double
 	Public CrosshairColorG As Double
 	Public CrosshairColorB As Double
@@ -209,7 +210,8 @@ Module Module1
 		Console.WriteLine(vbCrLf + "Extra Options:")
 		Console.WriteLine("16. Resolution: {0}", Settings(15))
 		Console.WriteLine("17. Sensitivity: {0}", Settings(16))
-		Console.WriteLine("18. DPI: {0}", DPI)
+		Console.WriteLine("18. Crosshair Dot: {0}", Settings(17))
+		Console.WriteLine("19. DPI: {0}", DPI)
 		Console.WriteLine(vbCrLf + "Do not enter a value to continue.")
 		StyleConsole()
 		Dim UserInputValid As Boolean = False
@@ -229,12 +231,12 @@ Module Module1
 			End Try
 		End While
 
-		While UserInput < 1 Or UserInput > 19
+		While UserInput < 1 Or UserInput > 20
 			Console.WriteLine("That is not a valid input, try again.")
 			UserInput = Console.ReadLine
 		End While
 
-		If UserInput = "18" Then
+		If UserInput = "19" Then
 			Console.Clear()
 			Console.WriteLine("Set your new DPI now.")
 			DPI = Console.ReadLine
@@ -288,7 +290,7 @@ Module Module1
 		Dim WriteViewmodel As Boolean = False
 		Dim WriteViewmodelDone As Boolean = False
 
-		For i = 0 To 16
+		For i = 0 To 17
 			For j = 0 To 6
 				If Settings(j) = "Yes" Then
 					WriteCrosshair = True
@@ -534,6 +536,11 @@ Module Module1
 					Sens = Sens * (400 / DPI)
 					Console.WriteLine("Sens: {0}", Sens)
 				End If
+
+				If i = 17 Then
+					CrosshairDot = Rand.Next(0, 2)
+					Console.WriteLine("Crosshair Dot: {0}", CrosshairDot)
+				End If
 			End If
 		Next
 
@@ -594,6 +601,9 @@ Module Module1
 			End If
 			If Settings(16) = "Yes" Then
 				objStreamWriter.WriteLine("sensitivity {0}", Sens)
+			End If
+			If Settings(17) = "Yes" Then
+				objStreamWriter.WriteLine("cl_crosshairdot {0}", CrosshairDot)
 			End If
 			objStreamWriter.Close()
 		End If
@@ -1038,7 +1048,8 @@ Module Module1
 		Console.WriteLine("7. Crosshair Enable Outline? (chance of crosshair using outline?): {0}", CrosshairOutlineUsed)
 		Console.WriteLine("8. Crosshair Outline Thickness Min: {0}", CrosshairOutlineThicknessMin)
 		Console.WriteLine("9. Crosshair Outline Thickness Max: {0}", CrosshairOutlineThicknessMax)
-		Console.WriteLine("10. Back to Preferences")
+		Console.WriteLine("10. Enabled Styles")
+		Console.WriteLine("11. Back to Preferences")
 		StyleConsole()
 		Dim UserInput As String = Console.ReadLine
 		Select Case UserInput
@@ -1138,6 +1149,30 @@ Module Module1
 					Console.WriteLine("That is not a valid number, resetting.")
 				End Try
 			Case 10
+				Dim InputValid As Boolean = False
+				While InputValid = False
+					Console.Clear()
+					StyleConsole()
+					Console.WriteLine("Please enter the number of the style you would like to switch now.")
+					For i = 0 To CrosshairStyles.Length - 1
+						Console.WriteLine("{0}. Crosshair Style {1}: {2}", i + 1, i, CrosshairStyles(i))
+					Next
+					Console.WriteLine("8. Back to Crosshair Settings")
+					StyleConsole()
+					UserInput = Console.ReadLine
+					Select Case UserInput
+						Case 1 To 7
+							If CrosshairStyles(UserInput - 1) = "Yes" Then
+								CrosshairStyles(UserInput - 1) = "No"
+							Else
+								CrosshairStyles(UserInput - 1) = "Yes"
+							End If
+						Case 8
+							CrosshairBounds()
+					End Select
+					SaveSettings()
+				End While
+			Case 11
 				Preferences()
 			Case Else
 				CrosshairBounds()
