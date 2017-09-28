@@ -138,5 +138,8 @@
     <Setting Name="Name" Type="System.String" Scope="User">
       <Value Profile="(Default)">DefaultUser</Value>
     </Setting>
+    <Setting Name="CrosshairUseT" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -468,6 +468,18 @@ Namespace My
                 Me("Name") = value
             End Set
         End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+        Public Property CrosshairUseT() As Boolean
+            Get
+                Return CType(Me("CrosshairUseT"),Boolean)
+            End Get
+            Set
+                Me("CrosshairUseT") = value
+            End Set
+        End Property
     End Class
 End Namespace
 
