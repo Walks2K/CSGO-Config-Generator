@@ -2,6 +2,8 @@
 Imports Microsoft.SqlServer
 Imports System.Net
 Imports System.Text.RegularExpressions
+Imports System.Data
+Imports System.Text
 
 Module Module1
 	Public CrosshairSize As Double
@@ -31,7 +33,7 @@ Module Module1
 	Public ResolutionAspectRatios() As String = {"4:3", "16:9", "16:10"}
 	Public ResolutionAspectRatiosUsed() As String = My.Settings.ResolutionAspectRatiosUsedList.Cast(Of String)().ToArray()
 	Public Settings() As String = {"Yes", "Yes", "No", "Yes", "Yes", "Yes", "Yes", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"}
-	Public Version As String = "5.0"
+	Public Version As String = "6.0"
 	Public WipeOptions As Boolean = True
 	Public CrosshairColorR As Double
 	Public CrosshairColorG As Double
@@ -116,7 +118,7 @@ Module Module1
 		StyleConsole()
 		If FirstTimeRun = True Then
 			Console.ForegroundColor = ConsoleColor.Green
-			Console.Write(vbCrLf + "Added cl_crosshair_t and removed easter egg. Hope you enjoy! ^_^" + vbCrLf + vbCrLf + "BiZR" + vbCrLf + vbCrLf)
+			Console.Write(vbCrLf + "Download configs now lists the files on the website and allows you to enter a number to download. Hope you enjoy! ^_^" + vbCrLf + vbCrLf + "BiZR" + vbCrLf + vbCrLf)
 			Console.ResetColor()
 			FirstTimeRun = False
 			SaveSettings()
@@ -1190,16 +1192,44 @@ Module Module1
 	Sub DownloadConfigs()
 		Console.Clear()
 		StyleConsole()
-		Console.WriteLine("Welcome to the CFG downloader, enter the name of the CFG you want to download now.")
-		Console.WriteLine("You can find a list of them here: http://95.172.92.86/cfg/")
-		Console.WriteLine("The .cfg part is not required. It will be removed automatically if you add it.")
+		Console.WriteLine("Welcome to the CFG downloader, enter the number of the CFG you want to download now.")
 		StyleConsole()
 
-		Dim FileToDownload As String = Console.ReadLine
+		Dim sb As New List(Of String)
+		Dim html As String
+
+		Using wc As New WebClient
+			html = wc.DownloadString("http://95.172.92.86/cfg")
+		End Using
+
+		Dim regx As New Regex("([\w+?\.\w+])+([a-zA-Z0-9\~\!\@\#\$\%\^\&amp;\*\(\)_\-\=\+\\\/\?\.\:\;\,]*)?.cfg", RegexOptions.IgnoreCase)
+		Dim matches As MatchCollection = regx.Matches(html)
+
+		For Each match As Match In matches
+			If Not sb.Contains(match.Value) Then
+				sb.Add(match.Value)
+			End If
+		Next
+
+		For i = 0 To sb.Count - 1
+			Console.WriteLine("{0}: {1}", i + 1, sb.Item(i))
+		Next
+
+		Dim FileToDownloadInt As String = Console.ReadLine
+		Dim FileToDownload As String
+
+		Try
+			FileToDownload = sb.Item(FileToDownloadInt - 1)
+		Catch ex As Exception
+			Console.WriteLine("That was not valid, resetting.")
+			Console.ReadLine()
+			DownloadConfigs()
+		End Try
 
 		If FileToDownload.Contains(".cfg") = True Then
 			FileToDownload = FileToDownload.Replace(".cfg", "")
 		End If
+
 
 		Dim Client As WebClient = New WebClient()
 
@@ -1211,7 +1241,7 @@ Module Module1
 			objStreamWriter.Close()
 			Console.Clear()
 			StyleConsole()
-			Console.WriteLine("This is the config:")
+			Console.WriteLine("This is {0}'s config:", FileToDownload)
 			Console.WriteLine(DisplayCFG)
 			Console.WriteLine("Press enter when you are ready to return to the main menu.")
 			StyleConsole()
